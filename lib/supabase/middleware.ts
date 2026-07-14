@@ -22,23 +22,27 @@ function isPublic(pathname: string) {
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Trim so stray whitespace/newlines from copy-paste in the dashboard don't
+  // produce an "Invalid supabaseUrl" crash.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
-  // If the Supabase env vars aren't inlined into this build, don't crash the
-  // whole site — let requests through (pages still guard via requireProfile)
-  // and surface the misconfiguration in the logs.
-  if (!supabaseUrl || !supabaseKey) {
+  // If the Supabase env vars are missing or malformed, don't crash the whole
+  // site — let requests through (pages still guard via requireProfile) and
+  // surface the misconfiguration in the logs.
+  const urlLooksValid = !!supabaseUrl && /^https?:\/\//.test(supabaseUrl);
+  if (!urlLooksValid || !supabaseKey) {
     console.error(
-      '[middleware] Missing NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY at runtime. Set them in Vercel and redeploy.',
+      `[middleware] Bad Supabase config at runtime (url=${JSON.stringify(
+        supabaseUrl,
+      )}, hasKey=${!!supabaseKey}). Check NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel and redeploy.`,
     );
     return response;
   }
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseKey,
-    {
+  let supabase: ReturnType<typeof createServerClient>;
+  try {
+    supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -53,8 +57,11 @@ export async function updateSession(request: NextRequest) {
           );
         },
       },
-    },
-  );
+    });
+  } catch (err) {
+    console.error('[middleware] failed to init Supabase client:', err);
+    return response;
+  }
 
   const { pathname } = request.nextUrl;
 
