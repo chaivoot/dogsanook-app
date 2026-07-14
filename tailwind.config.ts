@@ -20,10 +20,12 @@ const config: Config = {
           bgSofter: '#372c24', // hover / raised
           card: '#fbf6ec', // cream game card
           cream: '#fdf9f0',
-          gold: '#f5b301', // primary amber (buttons, progress, numbers)
-          goldDark: '#dda000',
-          goldSoft: '#fbe9b8',
-          green: '#7cb342', // logo green
+          gold: '#ffcb05', // brand yellow (from the logo) — buttons, progress, numbers
+          goldDark: '#e6b800',
+          goldSoft: '#ffe9a3',
+          teal: '#00848e', // brand teal (from the logo)
+          tealDark: '#006b73',
+          green: '#7cb342', // success / "allowed" status
           greenDark: '#5f9a34',
           blue: '#3b82f6', // owner "practiced" accent
           blueDark: '#2563eb',

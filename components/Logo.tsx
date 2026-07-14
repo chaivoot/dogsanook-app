@@ -1,10 +1,20 @@
-/** The "หมาสนุก" wordmark — green rounded badge, as on dogsanook.com. */
-export default function Logo({ className = '' }: { className?: string }) {
+/** The หมาสนุก brand mark (round teal badge). */
+export default function Logo({
+  size = 40,
+  className = '',
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
-    <span
-      className={`inline-flex items-center rounded-xl bg-brand-green px-2.5 py-1 text-lg font-bold leading-none text-white ${className}`}
-    >
-      หมาสนุก
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/logo.png"
+      alt="หมาสนุก"
+      width={size}
+      height={size}
+      style={{ width: size, height: size }}
+      className={`inline-block rounded-full ${className}`}
+    />
   );
 }

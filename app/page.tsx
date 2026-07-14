@@ -19,11 +19,9 @@ export default async function LoginPage({
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 py-12">
       <div className="w-full text-center">
-        <Logo className="text-2xl" />
+        <Logo size={128} className="mx-auto shadow-card" />
 
-        <div className="mt-10 text-6xl">🐕</div>
-
-        <h1 className="mt-6 text-2xl font-bold text-brand-cream">
+        <h1 className="mt-8 text-2xl font-bold text-brand-cream">
           ระบบติดตามการเรียนของน้องหมา
         </h1>
         <p className="mt-3 leading-relaxed text-brand-muted">
