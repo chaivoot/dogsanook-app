@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getCurrentProfile } from '@/lib/auth';
 import { STORAGE_BUCKET } from '@/lib/types';
@@ -94,6 +95,19 @@ export async function updateDog(formData: FormData) {
   await admin.from('dogs').update({ name, breed, notes }).eq('id', dogId);
 
   revalidatePath('/dashboard');
+}
+
+/** Owner deletes their own dog (cascades to progress / check-ins / photos). */
+export async function deleteDog(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const admin = createServiceClient();
+  await admin.from('dogs').delete().eq('id', dogId);
+
+  revalidatePath('/dashboard');
+  redirect('/dashboard');
 }
 
 /** Owner uploads / replaces their dog's profile photo. */

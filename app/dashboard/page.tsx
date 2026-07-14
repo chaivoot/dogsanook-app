@@ -7,6 +7,7 @@ import ProgressSummary from '@/components/games/ProgressSummary';
 import Legend from '@/components/games/Legend';
 import OwnerGameCard from '@/components/games/OwnerGameCard';
 import PhotoGallery from '@/components/games/PhotoGallery';
+import DeleteDogButton from '@/components/DeleteDogButton';
 import { addDog, updateDog, updateDogPhoto } from './actions';
 
 export default async function DashboardPage({
@@ -148,6 +149,11 @@ async function DogSection({
                 อัปโหลดรูป
               </button>
             </form>
+
+            <div className="border-t border-white/10 pt-4">
+              <p className="mb-2 text-xs text-brand-muted">โซนอันตราย</p>
+              <DeleteDogButton dogId={dog.id} dogName={dog.name} />
+            </div>
           </div>
         </details>
       </section>
