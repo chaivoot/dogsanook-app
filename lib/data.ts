@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import type {
   Dog,
   DogLessonProgress,
@@ -10,7 +10,7 @@ import type {
 
 /** All profiles, pending first (admin user management). */
 export async function getAllProfiles(): Promise<Profile[]> {
-  const supabase = createClient();
+  const supabase = createServiceClient();
   const { data } = await supabase
     .from('profiles')
     .select('*')
@@ -21,7 +21,7 @@ export async function getAllProfiles(): Promise<Profile[]> {
 }
 
 export async function getLessons(): Promise<Lesson[]> {
-  const supabase = createClient();
+  const supabase = createServiceClient();
   const { data } = await supabase
     .from('lessons')
     .select('*')
@@ -31,7 +31,7 @@ export async function getLessons(): Promise<Lesson[]> {
 
 /** Dogs owned by a given profile (owner dashboard). */
 export async function getDogsForOwner(ownerId: string): Promise<Dog[]> {
-  const supabase = createClient();
+  const supabase = createServiceClient();
   const { data } = await supabase
     .from('dogs')
     .select('*')
@@ -44,7 +44,7 @@ export async function getDogsForOwner(ownerId: string): Promise<Dog[]> {
 export async function getAllDogs(): Promise<
   (Dog & { owner: { display_name: string | null } | null })[]
 > {
-  const supabase = createClient();
+  const supabase = createServiceClient();
   const { data } = await supabase
     .from('dogs')
     .select('*, owner:profiles!dogs_owner_id_fkey(display_name)')
@@ -62,7 +62,7 @@ export async function getDogProgress(dogId: string): Promise<{
   lessons: LessonProgressView[];
   photos: SessionPhoto[];
 }> {
-  const supabase = createClient();
+  const supabase = createServiceClient();
 
   const [lessonsRes, progressRes, checkinsRes, photosRes] = await Promise.all([
     supabase.from('lessons').select('*').order('sort_order', { ascending: true }),

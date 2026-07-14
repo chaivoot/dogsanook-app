@@ -1,11 +1,21 @@
+import { redirect } from 'next/navigation';
 import Logo from '@/components/Logo';
 import LoginButton from '@/components/LoginButton';
+import { getCurrentProfile, isStaff } from '@/lib/auth';
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
+  // Already signed in → route to the right place.
+  const profile = await getCurrentProfile();
+  if (profile) {
+    if (profile.status === 'pending') redirect('/pending');
+    if (profile.status === 'blocked') redirect('/blocked');
+    redirect(isStaff(profile) ? '/admin' : '/dashboard');
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 py-12">
       <div className="w-full text-center">

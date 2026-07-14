@@ -1,41 +1,15 @@
-'use client';
-
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 /**
- * Starts the LINE login flow. LINE is configured on Supabase as a custom OIDC
- * provider (issuer https://access.line.me). GoTrue routes by the provider slug,
- * so we pass `line` even though it isn't in the built-in Provider union.
+ * Kicks off LINE login. We handle the OAuth flow ourselves in
+ * /auth/line/login, so this is just a link — no client JS needed.
  */
 export default function LoginButton() {
-  const [loading, setLoading] = useState(false);
-
-  async function signIn() {
-    setLoading(true);
-    const supabase = createClient();
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
-    // LINE is a Supabase custom OIDC provider, so it isn't in the built-in
-    // Provider union — cast to satisfy the SDK types.
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'line' as unknown as 'google',
-      options: {
-        redirectTo: `${appUrl}/auth/callback`,
-        scopes: 'openid profile',
-      },
-    });
-    if (error) {
-      setLoading(false);
-      alert(`เข้าสู่ระบบไม่สำเร็จ: ${error.message}`);
-    }
-  }
-
   return (
-    <button onClick={signIn} disabled={loading} className="btn-gold w-full text-base">
+    <Link href="/auth/line/login" className="btn-gold w-full text-base">
       <LineIcon />
-      {loading ? 'กำลังเชื่อมต่อ…' : 'เข้าสู่ระบบด้วย LINE'}
-    </button>
+      เข้าสู่ระบบด้วย LINE
+    </Link>
   );
 }
 

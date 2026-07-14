@@ -1,60 +1,69 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { getCurrentProfile, isStaff } from '@/lib/auth';
 import { STORAGE_BUCKET } from '@/lib/types';
+
+/** Ensures the caller is approved staff before any admin mutation. */
+async function ensureStaff(): Promise<boolean> {
+  const profile = await getCurrentProfile();
+  return isStaff(profile) && profile?.status === 'allowed';
+}
 
 // --- User approval -----------------------------------------------------------
 
 export async function setUserStatus(formData: FormData) {
+  if (!(await ensureStaff())) return;
   const profileId = String(formData.get('profileId'));
   const status = String(formData.get('status')); // allowed | blocked | pending
-  const supabase = createClient();
-  await supabase.from('profiles').update({ status }).eq('id', profileId);
+  const admin = createServiceClient();
+  await admin.from('profiles').update({ status }).eq('id', profileId);
   revalidatePath('/admin');
 }
 
 export async function setUserRole(formData: FormData) {
+  if (!(await ensureStaff())) return;
   const profileId = String(formData.get('profileId'));
   const role = String(formData.get('role')); // admin | teacher | owner
-  const supabase = createClient();
-  await supabase.from('profiles').update({ role }).eq('id', profileId);
+  const admin = createServiceClient();
+  await admin.from('profiles').update({ role }).eq('id', profileId);
   revalidatePath('/admin');
 }
 
 // --- Dogs --------------------------------------------------------------------
 
 export async function createDog(formData: FormData) {
+  if (!(await ensureStaff())) return;
   const name = String(formData.get('name') ?? '').trim();
   if (!name) return;
   const breed = String(formData.get('breed') ?? '').trim() || null;
   const ownerId = String(formData.get('ownerId') ?? '') || null;
 
-  const supabase = createClient();
-  await supabase.from('dogs').insert({ name, breed, owner_id: ownerId });
+  const admin = createServiceClient();
+  await admin.from('dogs').insert({ name, breed, owner_id: ownerId });
   revalidatePath('/admin');
 }
 
 export async function assignDogOwner(formData: FormData) {
+  if (!(await ensureStaff())) return;
   const dogId = String(formData.get('dogId'));
   const ownerId = String(formData.get('ownerId') ?? '') || null;
-  const supabase = createClient();
-  await supabase.from('dogs').update({ owner_id: ownerId }).eq('id', dogId);
+  const admin = createServiceClient();
+  await admin.from('dogs').update({ owner_id: ownerId }).eq('id', dogId);
   revalidatePath('/admin');
 }
 
 export async function updateDogDetails(formData: FormData) {
+  if (!(await ensureStaff())) return;
   const dogId = String(formData.get('dogId'));
   const name = String(formData.get('name') ?? '').trim();
   if (!name) return;
   const breed = String(formData.get('breed') ?? '').trim() || null;
   const notes = String(formData.get('notes') ?? '').trim() || null;
 
-  const supabase = createClient();
-  await supabase
-    .from('dogs')
-    .update({ name, breed, notes })
-    .eq('id', dogId);
+  const admin = createServiceClient();
+  await admin.from('dogs').update({ name, breed, notes }).eq('id', dogId);
   revalidatePath('/admin');
 }
 
@@ -65,34 +74,46 @@ async function upsertProgress(
   lessonId: number,
   field: 'taught' | 'can_do',
   value: boolean,
+  staffId: string,
 ) {
-  const supabase = createClient();
-  await supabase
+  const admin = createServiceClient();
+  const stamp = value
+    ? { [`${field}_at`]: new Date().toISOString(), [`${field}_by`]: staffId }
+    : { [`${field}_at`]: null, [`${field}_by`]: null };
+
+  await admin
     .from('dog_lesson_progress')
     .upsert(
-      { dog_id: dogId, lesson_id: lessonId, [field]: value },
+      { dog_id: dogId, lesson_id: lessonId, [field]: value, ...stamp },
       { onConflict: 'dog_id,lesson_id' },
     );
   revalidatePath('/admin');
 }
 
 export async function toggleTaught(formData: FormData) {
+  const profile = await getCurrentProfile();
+  if (!isStaff(profile) || profile?.status !== 'allowed') return;
   const dogId = String(formData.get('dogId'));
   const lessonId = Number(formData.get('lessonId'));
   const value = formData.get('value') === 'true';
-  await upsertProgress(dogId, lessonId, 'taught', value);
+  await upsertProgress(dogId, lessonId, 'taught', value, profile.id);
 }
 
 export async function toggleCanDo(formData: FormData) {
+  const profile = await getCurrentProfile();
+  if (!isStaff(profile) || profile?.status !== 'allowed') return;
   const dogId = String(formData.get('dogId'));
   const lessonId = Number(formData.get('lessonId'));
   const value = formData.get('value') === 'true';
-  await upsertProgress(dogId, lessonId, 'can_do', value);
+  await upsertProgress(dogId, lessonId, 'can_do', value, profile.id);
 }
 
 // --- Session photos ----------------------------------------------------------
 
 export async function uploadSessionPhoto(formData: FormData) {
+  const profile = await getCurrentProfile();
+  if (!isStaff(profile) || profile?.status !== 'allowed') return;
+
   const dogId = String(formData.get('dogId'));
   const lessonRaw = String(formData.get('lessonId') ?? '');
   const lessonId = lessonRaw ? Number(lessonRaw) : null;
@@ -100,35 +121,30 @@ export async function uploadSessionPhoto(formData: FormData) {
   const file = formData.get('photo') as File | null;
   if (!file || file.size === 0) return;
 
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const admin = createServiceClient();
   const ext = file.name.split('.').pop() || 'jpg';
   const path = `sessions/${dogId}/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(path, file);
+  const { error } = await admin.storage.from(STORAGE_BUCKET).upload(path, file);
   if (error) return;
 
   const {
     data: { publicUrl },
-  } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  } = admin.storage.from(STORAGE_BUCKET).getPublicUrl(path);
 
-  await supabase.from('session_photos').insert({
+  await admin.from('session_photos').insert({
     dog_id: dogId,
     lesson_id: lessonId,
     photo_url: publicUrl,
     caption,
-    uploaded_by: user?.id ?? null,
+    uploaded_by: profile.id,
   });
   revalidatePath('/admin');
 }
 
 export async function deleteSessionPhoto(formData: FormData) {
+  if (!(await ensureStaff())) return;
   const id = String(formData.get('photoId'));
-  const supabase = createClient();
-  await supabase.from('session_photos').delete().eq('id', id);
+  const admin = createServiceClient();
+  await admin.from('session_photos').delete().eq('id', id);
   revalidatePath('/admin');
 }
