@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background-color: #221b16;
+  color: #f5efe6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@layer components {
+  /* Golden pill button — the primary CTA used across dogsanook.com */
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-gold px-6 py-3
+      font-semibold text-brand-ink shadow-soft transition
+      hover:bg-brand-goldDark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-brand-gold/60
+      px-6 py-3 font-semibold text-brand-gold transition hover:bg-brand-gold/10 active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/10
+      bg-white/5 px-4 py-2 text-sm font-medium text-brand-cream transition hover:bg-white/10;
+  }
+
+  /* Cream game card, as on the /mommam page */
+  .game-card {
+    @apply rounded-card bg-brand-card p-5 text-brand-ink shadow-card;
+  }
+
+  .dark-card {
+    @apply rounded-card border border-white/5 bg-brand-bgSoft p-5;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium;
+  }
+
+  .label {
+    @apply mb-1 block text-sm font-medium text-brand-muted;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-brand-bg px-4 py-2.5 text-brand-cream
+      placeholder:text-brand-muted/60 focus:border-brand-gold focus:outline-none focus:ring-1
+      focus:ring-brand-gold;
+  }
+}

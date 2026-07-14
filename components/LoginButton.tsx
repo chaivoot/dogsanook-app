@@ -1,0 +1,54 @@
+'use client';
+
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+
+/**
+ * Starts the LINE login flow. LINE is configured on Supabase as a custom OIDC
+ * provider (issuer https://access.line.me). GoTrue routes by the provider slug,
+ * so we pass `line` even though it isn't in the built-in Provider union.
+ */
+export default function LoginButton() {
+  const [loading, setLoading] = useState(false);
+
+  async function signIn() {
+    setLoading(true);
+    const supabase = createClient();
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+    // LINE is a Supabase custom OIDC provider, so it isn't in the built-in
+    // Provider union — cast to satisfy the SDK types.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'line' as unknown as 'google',
+      options: {
+        redirectTo: `${appUrl}/auth/callback`,
+        scopes: 'openid profile',
+      },
+    });
+    if (error) {
+      setLoading(false);
+      alert(`เข้าสู่ระบบไม่สำเร็จ: ${error.message}`);
+    }
+  }
+
+  return (
+    <button onClick={signIn} disabled={loading} className="btn-gold w-full text-base">
+      <LineIcon />
+      {loading ? 'กำลังเชื่อมต่อ…' : 'เข้าสู่ระบบด้วย LINE'}
+    </button>
+  );
+}
+
+function LineIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12 2C6.48 2 2 5.64 2 10.12c0 4.02 3.55 7.39 8.35 8.03.33.07.77.22.88.5.1.26.07.66.03.92l-.14.85c-.04.26-.2 1.02.9.56 1.1-.46 5.93-3.49 8.09-5.98C21.5 13.36 22 11.8 22 10.12 22 5.64 17.52 2 12 2ZM8.09 12.79H6.1c-.29 0-.52-.24-.52-.52V8.3c0-.29.23-.52.52-.52.29 0 .52.23.52.52v3.44h1.47c.29 0 .52.23.52.52 0 .28-.23.53-.52.53Zm2.05-.52c0 .28-.23.52-.52.52a.52.52 0 0 1-.52-.52V8.3c0-.29.23-.52.52-.52.29 0 .52.23.52.52v3.97Zm4.7 0c0 .22-.15.42-.36.49a.54.54 0 0 1-.16.03c-.16 0-.32-.08-.42-.21l-2.04-2.77v2.46c0 .28-.23.52-.52.52a.52.52 0 0 1-.52-.52V8.3c0-.22.15-.42.36-.49a.52.52 0 0 1 .58.18l2.04 2.78V8.3c0-.29.24-.52.52-.52.29 0 .52.23.52.52v3.97Zm3.17-2.5c.29 0 .52.24.52.52 0 .29-.23.52-.52.52h-1.47v.94h1.47c.29 0 .52.24.52.52 0 .29-.23.53-.52.53h-1.99a.52.52 0 0 1-.52-.52V8.3c0-.29.23-.52.52-.52h1.99c.29 0 .52.23.52.52 0 .29-.23.52-.52.52h-1.47v.95h1.47Z" />
+    </svg>
+  );
+}
