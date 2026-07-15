@@ -56,7 +56,9 @@ export default async function AdminPage({
             {profiles.length === 0 ? (
               <p className="text-sm text-brand-muted">ยังไม่มีผู้ใช้</p>
             ) : (
-              profiles.map((p) => <UserRow key={p.id} profile={p} />)
+              profiles.map((p) => (
+                <UserRow key={p.id} profile={p} isSelf={p.id === profile.id} />
+              ))
             )}
           </section>
         )}

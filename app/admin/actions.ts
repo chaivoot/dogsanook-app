@@ -14,18 +14,24 @@ async function ensureStaff(): Promise<boolean> {
 // --- User approval -----------------------------------------------------------
 
 export async function setUserStatus(formData: FormData) {
-  if (!(await ensureStaff())) return;
+  const me = await getCurrentProfile();
+  if (!isStaff(me) || me?.status !== 'allowed') return;
   const profileId = String(formData.get('profileId'));
   const status = String(formData.get('status')); // allowed | blocked | pending
+  // Guard: never let staff block/suspend their own account (lock-out).
+  if (profileId === me.id && status !== 'allowed') return;
   const admin = createServiceClient();
   await admin.from('profiles').update({ status }).eq('id', profileId);
   revalidatePath('/admin');
 }
 
 export async function setUserRole(formData: FormData) {
-  if (!(await ensureStaff())) return;
+  const me = await getCurrentProfile();
+  if (!isStaff(me) || me?.status !== 'allowed') return;
   const profileId = String(formData.get('profileId'));
   const role = String(formData.get('role')); // admin | teacher | owner
+  // Guard: never let staff demote themselves out of staff access.
+  if (profileId === me.id && role === 'owner') return;
   const admin = createServiceClient();
   await admin.from('profiles').update({ role }).eq('id', profileId);
   revalidatePath('/admin');
