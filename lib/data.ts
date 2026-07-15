@@ -39,6 +39,18 @@ export async function getLessonBySlug(slug: string): Promise<Lesson | null> {
   return (data as Lesson) ?? null;
 }
 
+export async function getDogById(
+  dogId: string,
+): Promise<(Dog & { owner: { display_name: string | null } | null }) | null> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('dogs')
+    .select('*, owner:profiles!dogs_owner_id_fkey(display_name)')
+    .eq('id', dogId)
+    .maybeSingle();
+  return (data as Dog & { owner: { display_name: string | null } | null }) ?? null;
+}
+
 /** Dogs owned by a given profile (owner dashboard). */
 export async function getDogsForOwner(ownerId: string): Promise<Dog[]> {
   const supabase = createServiceClient();

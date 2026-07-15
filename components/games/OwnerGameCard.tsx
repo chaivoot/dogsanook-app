@@ -15,13 +15,17 @@ function GuideLink({ slug }: { slug: string | null }) {
   );
 }
 
-/** One cream game card for the owner dashboard (taught/can_do read-only). */
+/** One cream game card for the owner dashboard (taught/can_do read-only).
+ *  `readOnly` renders the exact same layout but without the check-in buttons —
+ *  used for the staff "owner preview". */
 export default function OwnerGameCard({
   dogId,
   view,
+  readOnly = false,
 }: {
   dogId: string;
   view: LessonProgressView;
+  readOnly?: boolean;
 }) {
   const { lesson, taught, can_do, practiced_count, progress } = view;
   const locked = !progress && practiced_count === 0;
@@ -64,6 +68,7 @@ export default function OwnerGameCard({
             active={practiced_count > 0}
             tone="blue"
           />
+          {!readOnly && (
           <div className="flex items-center gap-1.5">
             {practiced_count > 0 && (
               <form action={undoCheckin}>
@@ -89,6 +94,7 @@ export default function OwnerGameCard({
               </button>
             </form>
           </div>
+          )}
         </div>
       </div>
     </div>

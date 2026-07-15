@@ -240,15 +240,23 @@ async function ProgressManager({ dogId }: { dogId: string }) {
         ← กลับไปรายการน้อง
       </Link>
 
-      <section className="dark-card flex items-center gap-4">
-        <DogAvatar dog={dog} size={64} />
-        <div>
-          <h2 className="text-xl font-bold text-brand-cream">{dog.name}</h2>
-          <p className="text-sm text-brand-muted">
-            {dog.breed || 'ไม่ระบุพันธุ์'} ·{' '}
-            {dog.owner?.display_name ?? 'ยังไม่มีเจ้าของ'}
-          </p>
+      <section className="dark-card flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <DogAvatar dog={dog} size={64} />
+          <div>
+            <h2 className="text-xl font-bold text-brand-cream">{dog.name}</h2>
+            <p className="text-sm text-brand-muted">
+              {dog.breed || 'ไม่ระบุพันธุ์'} ·{' '}
+              {dog.owner?.display_name ?? 'ยังไม่มีเจ้าของ'}
+            </p>
+          </div>
         </div>
+        <Link
+          href={`/admin/preview/${dog.id}`}
+          className="inline-flex items-center gap-1.5 rounded-full border border-brand-teal/50 px-4 py-2 text-sm font-medium text-brand-teal transition hover:bg-brand-teal/10"
+        >
+          👁 ดูมุมมองเจ้าของ
+        </Link>
       </section>
 
       <section className="space-y-3">
