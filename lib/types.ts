@@ -27,6 +27,8 @@ export interface Lesson {
   slug: string | null;
   name_th: string;
   sort_order: number;
+  summary: string | null;
+  content: string | null;
 }
 
 export interface DogLessonProgress {

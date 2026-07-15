@@ -4,16 +4,22 @@ import {
   getAllProfiles,
   getAllDogs,
   getDogProgress,
+  getLessons,
 } from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
 import DogAvatar from '@/components/DogAvatar';
 import UserRow from '@/components/admin/UserRow';
 import DogRow from '@/components/admin/DogRow';
 import AdminGameCard from '@/components/games/AdminGameCard';
-import { createDog, uploadSessionPhoto, deleteSessionPhoto } from './actions';
+import {
+  createDog,
+  uploadSessionPhoto,
+  deleteSessionPhoto,
+  updateLessonContent,
+} from './actions';
 import { redirect } from 'next/navigation';
 
-type Tab = 'users' | 'dogs' | 'progress';
+type Tab = 'users' | 'dogs' | 'guides' | 'progress';
 
 export default async function AdminPage({
   searchParams,
@@ -39,9 +45,10 @@ export default async function AdminPage({
         <h1 className="mb-4 text-2xl font-bold text-brand-cream">แผงครู</h1>
 
         {/* Tabs */}
-        <nav className="mb-6 flex gap-2">
+        <nav className="mb-6 flex flex-wrap gap-2">
           <TabLink tab="users" current={tab} label="ผู้ใช้" badge={pendingCount} />
           <TabLink tab="dogs" current={tab} label="น้องหมา" />
+          <TabLink tab="guides" current={tab} label="คู่มือ" />
         </nav>
 
         {tab === 'users' && (
@@ -97,6 +104,8 @@ export default async function AdminPage({
           </section>
         )}
 
+        {tab === 'guides' && <GuidesEditor />}
+
         {tab === 'progress' && searchParams.dog && (
           <ProgressManager dogId={searchParams.dog} />
         )}
@@ -133,6 +142,76 @@ function TabLink({
         </span>
       ) : null}
     </Link>
+  );
+}
+
+async function GuidesEditor() {
+  const lessons = await getLessons();
+  return (
+    <section className="space-y-3">
+      <p className="text-sm text-brand-muted">
+        ใส่/แก้เนื้อหาคู่มือแต่ละเกม (รองรับ Markdown เช่น **ตัวหนา**, - รายการ)
+        เจ้าของจะกดดูได้จากการ์ดเกมในหน้าของตัวเอง
+      </p>
+      {lessons.map((lesson) => {
+        const num = String(lesson.id).padStart(2, '0');
+        const filled = !!lesson.content;
+        return (
+          <details key={lesson.id} className="dark-card">
+            <summary className="flex cursor-pointer items-center justify-between gap-2">
+              <span className="font-medium text-brand-cream">
+                <span className="text-brand-gold">{num}</span> {lesson.name_th}
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs ${
+                  filled
+                    ? 'bg-brand-green/15 text-brand-green'
+                    : 'bg-white/5 text-brand-muted'
+                }`}
+              >
+                {filled ? 'มีเนื้อหา' : 'ว่าง'}
+              </span>
+            </summary>
+
+            <form action={updateLessonContent} className="mt-4 space-y-3">
+              <input type="hidden" name="lessonId" value={lesson.id} />
+              <div>
+                <label className="label">สรุปสั้นๆ (ไม่บังคับ)</label>
+                <input
+                  name="summary"
+                  defaultValue={lesson.summary ?? ''}
+                  className="input"
+                  placeholder="1 บรรทัดอธิบายเกมนี้"
+                />
+              </div>
+              <div>
+                <label className="label">เนื้อหาคู่มือ (Markdown)</label>
+                <textarea
+                  name="content"
+                  defaultValue={lesson.content ?? ''}
+                  rows={10}
+                  className="input font-mono text-sm"
+                  placeholder="วางเนื้อหาจากคู่มือได้เลย…"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <button type="submit" className="btn-gold">
+                  บันทึก
+                </button>
+                {lesson.slug && (
+                  <Link
+                    href={`/games/${lesson.slug}`}
+                    className="text-sm text-brand-teal hover:underline"
+                  >
+                    เปิดหน้าคู่มือ →
+                  </Link>
+                )}
+              </div>
+            </form>
+          </details>
+        );
+      })}
+    </section>
   );
 }
 

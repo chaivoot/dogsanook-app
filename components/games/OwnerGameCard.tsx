@@ -1,6 +1,19 @@
+import Link from 'next/link';
 import type { LessonProgressView } from '@/lib/types';
 import { checkinLesson, undoCheckin } from '@/app/dashboard/actions';
 import { StatusRow } from './StatusPieces';
+
+function GuideLink({ slug }: { slug: string | null }) {
+  if (!slug) return null;
+  return (
+    <Link
+      href={`/games/${slug}`}
+      className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-teal hover:underline"
+    >
+      ดูคู่มือเกม →
+    </Link>
+  );
+}
 
 /** One cream game card for the owner dashboard (taught/can_do read-only). */
 export default function OwnerGameCard({
@@ -24,6 +37,7 @@ export default function OwnerGameCard({
           </h3>
         </div>
         <p className="mt-2 text-xs text-brand-mutedInk">ยังไม่ถึง · รอเรียน</p>
+        <GuideLink slug={lesson.slug} />
       </div>
     );
   }
@@ -32,7 +46,12 @@ export default function OwnerGameCard({
     <div className="game-card">
       <div className="flex items-center gap-3">
         <span className="text-xl font-bold text-brand-gold">{num}</span>
-        <h3 className="text-lg font-semibold text-brand-ink">{lesson.name_th}</h3>
+        <div>
+          <h3 className="text-lg font-semibold text-brand-ink">
+            {lesson.name_th}
+          </h3>
+          <GuideLink slug={lesson.slug} />
+        </div>
       </div>
 
       <div className="mt-3 space-y-2">

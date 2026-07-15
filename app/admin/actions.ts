@@ -108,6 +108,20 @@ export async function toggleCanDo(formData: FormData) {
   await upsertProgress(dogId, lessonId, 'can_do', value, profile.id);
 }
 
+// --- Lesson guide content ----------------------------------------------------
+
+export async function updateLessonContent(formData: FormData) {
+  if (!(await ensureStaff())) return;
+  const lessonId = Number(formData.get('lessonId'));
+  const summary = String(formData.get('summary') ?? '').trim() || null;
+  const content = String(formData.get('content') ?? '').trim() || null;
+
+  const admin = createServiceClient();
+  await admin.from('lessons').update({ summary, content }).eq('id', lessonId);
+  revalidatePath('/admin');
+  revalidatePath('/games', 'layout');
+}
+
 // --- Session photos ----------------------------------------------------------
 
 export async function uploadSessionPhoto(formData: FormData) {

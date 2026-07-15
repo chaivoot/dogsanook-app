@@ -55,3 +55,49 @@ body {
       focus:ring-brand-gold;
   }
 }
+
+/* Rendered game-guide content */
+.markdown {
+  @apply leading-relaxed text-brand-cream/90;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  @apply mb-2 mt-6 font-bold text-brand-cream;
+}
+.markdown h1 {
+  @apply text-xl;
+}
+.markdown h2 {
+  @apply text-lg text-brand-gold;
+}
+.markdown h3 {
+  @apply text-base;
+}
+.markdown p {
+  @apply my-3;
+}
+.markdown ul {
+  @apply my-3 list-disc space-y-1 pl-5;
+}
+.markdown ol {
+  @apply my-3 list-decimal space-y-1 pl-5;
+}
+.markdown a {
+  @apply text-brand-gold underline;
+}
+.markdown strong {
+  @apply font-semibold text-brand-cream;
+}
+.markdown blockquote {
+  @apply my-3 border-l-2 border-brand-gold/50 pl-4 text-brand-muted;
+}
+.markdown img {
+  @apply my-3 max-w-full rounded-xl;
+}
+.markdown hr {
+  @apply my-6 border-white/10;
+}
+.markdown code {
+  @apply rounded bg-white/10 px-1 py-0.5 text-sm;
+}

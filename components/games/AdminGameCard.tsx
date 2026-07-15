@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { LessonProgressView } from '@/lib/types';
 import { toggleTaught, toggleCanDo } from '@/app/admin/actions';
 
@@ -16,7 +17,19 @@ export default function AdminGameCard({
     <div className="game-card">
       <div className="flex items-center gap-3">
         <span className="text-xl font-bold text-brand-gold">{num}</span>
-        <h3 className="text-lg font-semibold text-brand-ink">{lesson.name_th}</h3>
+        <div>
+          <h3 className="text-lg font-semibold text-brand-ink">
+            {lesson.name_th}
+          </h3>
+          {lesson.slug && (
+            <Link
+              href={`/games/${lesson.slug}`}
+              className="text-sm font-medium text-brand-teal hover:underline"
+            >
+              ดูคู่มือ →
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
