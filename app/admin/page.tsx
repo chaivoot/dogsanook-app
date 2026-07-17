@@ -90,6 +90,15 @@ export default async function AdminPage({
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="label">รูปน้อง (ไม่บังคับ)</label>
+                  <input
+                    type="file"
+                    name="photo"
+                    accept="image/*"
+                    className="block w-full text-sm text-brand-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-gold file:px-4 file:py-2 file:font-semibold file:text-brand-ink"
+                  />
+                </div>
                 <button type="submit" className="btn-gold">
                   เพิ่มน้อง
                 </button>

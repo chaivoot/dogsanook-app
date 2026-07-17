@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getCurrentProfile, isStaff } from '@/lib/auth';
-import { STORAGE_BUCKET } from '@/lib/types';
+import { uploadDogImage } from '@/lib/storage';
 
 /** Ensures the caller is approved staff before any admin mutation. */
 async function ensureStaff(): Promise<boolean> {
@@ -47,7 +47,17 @@ export async function createDog(formData: FormData) {
   const ownerId = String(formData.get('ownerId') ?? '') || null;
 
   const admin = createServiceClient();
-  await admin.from('dogs').insert({ name, breed, owner_id: ownerId });
+  const { data: created } = await admin
+    .from('dogs')
+    .insert({ name, breed, owner_id: ownerId })
+    .select('id')
+    .single();
+
+  const file = formData.get('photo') as File | null;
+  if (created && file && file.size > 0) {
+    const url = await uploadDogImage(created.id, file);
+    if (url) await admin.from('dogs').update({ photo_url: url }).eq('id', created.id);
+  }
   revalidatePath('/admin');
 }
 
@@ -141,20 +151,14 @@ export async function uploadSessionPhoto(formData: FormData) {
   const file = formData.get('photo') as File | null;
   if (!file || file.size === 0) return;
 
+  const url = await uploadDogImage(dogId, file, 'session');
+  if (!url) return;
+
   const admin = createServiceClient();
-  const ext = file.name.split('.').pop() || 'jpg';
-  const path = `sessions/${dogId}/${Date.now()}.${ext}`;
-  const { error } = await admin.storage.from(STORAGE_BUCKET).upload(path, file);
-  if (error) return;
-
-  const {
-    data: { publicUrl },
-  } = admin.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-
   await admin.from('session_photos').insert({
     dog_id: dogId,
     lesson_id: lessonId,
-    photo_url: publicUrl,
+    photo_url: url,
     caption,
     uploaded_by: profile.id,
   });

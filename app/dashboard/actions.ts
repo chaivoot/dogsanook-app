@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getCurrentProfile } from '@/lib/auth';
-import { STORAGE_BUCKET } from '@/lib/types';
+import { uploadDogImage } from '@/lib/storage';
 
 /** Confirms the current approved user owns `dogId`; returns their profile id. */
 async function requireDogOwner(dogId: string): Promise<string | null> {
@@ -65,7 +65,7 @@ export async function undoCheckin(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
-/** Owner adds a new dog to their own account. */
+/** Owner adds a new dog to their own account (with an optional photo). */
 export async function addDog(formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile || profile.status !== 'allowed') return;
@@ -75,7 +75,17 @@ export async function addDog(formData: FormData) {
   const breed = String(formData.get('breed') ?? '').trim() || null;
 
   const admin = createServiceClient();
-  await admin.from('dogs').insert({ name, breed, owner_id: profile.id });
+  const { data: created } = await admin
+    .from('dogs')
+    .insert({ name, breed, owner_id: profile.id })
+    .select('id')
+    .single();
+
+  const file = formData.get('photo') as File | null;
+  if (created && file && file.size > 0) {
+    const url = await uploadDogImage(created.id, file);
+    if (url) await admin.from('dogs').update({ photo_url: url }).eq('id', created.id);
+  }
 
   revalidatePath('/dashboard');
 }
@@ -117,21 +127,10 @@ export async function updateDogPhoto(formData: FormData) {
   if (!ownerId) return;
 
   const file = formData.get('photo') as File | null;
-  if (!file || file.size === 0) return;
+  const url = await uploadDogImage(dogId, file);
+  if (!url) return;
 
   const admin = createServiceClient();
-  const ext = file.name.split('.').pop() || 'jpg';
-  const path = `dogs/${dogId}/profile-${Date.now()}.${ext}`;
-
-  const { error } = await admin.storage
-    .from(STORAGE_BUCKET)
-    .upload(path, file, { upsert: true });
-  if (error) return;
-
-  const {
-    data: { publicUrl },
-  } = admin.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-
-  await admin.from('dogs').update({ photo_url: publicUrl }).eq('id', dogId);
+  await admin.from('dogs').update({ photo_url: url }).eq('id', dogId);
   revalidatePath('/dashboard');
 }
