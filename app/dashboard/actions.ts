@@ -6,20 +6,20 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { getCurrentProfile } from '@/lib/auth';
 import { uploadDogImage } from '@/lib/storage';
 
-/** Confirms the current approved user owns `dogId`; returns their profile id. */
+/** Confirms the current approved user owns/co-owns `dogId`; returns their id. */
 async function requireDogOwner(dogId: string): Promise<string | null> {
   const profile = await getCurrentProfile();
   if (!profile || profile.status !== 'allowed') return null;
 
   const admin = createServiceClient();
-  const { data: dog } = await admin
-    .from('dogs')
+  const { data: link } = await admin
+    .from('dog_owners')
     .select('owner_id')
-    .eq('id', dogId)
-    .single();
+    .eq('dog_id', dogId)
+    .eq('owner_id', profile.id)
+    .maybeSingle();
 
-  if (!dog || dog.owner_id !== profile.id) return null;
-  return profile.id;
+  return link ? profile.id : null;
 }
 
 /** Owner logs one homework practice for a lesson. */
@@ -80,9 +80,15 @@ export async function addDog(formData: FormData) {
     .insert({ name, breed, owner_id: profile.id })
     .select('id')
     .single();
+  if (!created) return;
+
+  // Register the creator as an owner in the join table.
+  await admin
+    .from('dog_owners')
+    .insert({ dog_id: created.id, owner_id: profile.id });
 
   const file = formData.get('photo') as File | null;
-  if (created && file && file.size > 0) {
+  if (file && file.size > 0) {
     const url = await uploadDogImage(created.id, file);
     if (url) await admin.from('dogs').update({ photo_url: url }).eq('id', created.id);
   }

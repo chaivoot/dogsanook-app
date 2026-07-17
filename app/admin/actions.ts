@@ -52,21 +52,76 @@ export async function createDog(formData: FormData) {
     .insert({ name, breed, owner_id: ownerId })
     .select('id')
     .single();
+  if (!created) return;
+
+  if (ownerId) {
+    await admin
+      .from('dog_owners')
+      .insert({ dog_id: created.id, owner_id: ownerId });
+  }
 
   const file = formData.get('photo') as File | null;
-  if (created && file && file.size > 0) {
+  if (file && file.size > 0) {
     const url = await uploadDogImage(created.id, file);
     if (url) await admin.from('dogs').update({ photo_url: url }).eq('id', created.id);
   }
   revalidatePath('/admin');
 }
 
-export async function assignDogOwner(formData: FormData) {
+/** Add an owner (or co-owner) to a dog — a household can share a dog. */
+export async function addDogOwner(formData: FormData) {
   if (!(await ensureStaff())) return;
   const dogId = String(formData.get('dogId'));
-  const ownerId = String(formData.get('ownerId') ?? '') || null;
+  const ownerId = String(formData.get('ownerId') ?? '');
+  if (!ownerId) return;
+
   const admin = createServiceClient();
-  await admin.from('dogs').update({ owner_id: ownerId }).eq('id', dogId);
+  await admin
+    .from('dog_owners')
+    .upsert({ dog_id: dogId, owner_id: ownerId }, { onConflict: 'dog_id,owner_id' });
+
+  // keep the legacy dogs.owner_id populated if it was empty
+  const { data: dog } = await admin
+    .from('dogs')
+    .select('owner_id')
+    .eq('id', dogId)
+    .single();
+  if (dog && !dog.owner_id) {
+    await admin.from('dogs').update({ owner_id: ownerId }).eq('id', dogId);
+  }
+  revalidatePath('/admin');
+}
+
+/** Remove an owner from a dog. */
+export async function removeDogOwner(formData: FormData) {
+  if (!(await ensureStaff())) return;
+  const dogId = String(formData.get('dogId'));
+  const ownerId = String(formData.get('ownerId'));
+
+  const admin = createServiceClient();
+  await admin
+    .from('dog_owners')
+    .delete()
+    .eq('dog_id', dogId)
+    .eq('owner_id', ownerId);
+
+  // if we removed the legacy primary owner, repoint or clear it
+  const { data: dog } = await admin
+    .from('dogs')
+    .select('owner_id')
+    .eq('id', dogId)
+    .single();
+  if (dog?.owner_id === ownerId) {
+    const { data: remaining } = await admin
+      .from('dog_owners')
+      .select('owner_id')
+      .eq('dog_id', dogId)
+      .limit(1);
+    await admin
+      .from('dogs')
+      .update({ owner_id: remaining?.[0]?.owner_id ?? null })
+      .eq('id', dogId);
+  }
   revalidatePath('/admin');
 }
 

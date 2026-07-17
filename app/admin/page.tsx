@@ -6,6 +6,7 @@ import {
   getDogProgress,
   getLessons,
 } from '@/lib/data';
+import { dogOwners } from '@/lib/types';
 import AppHeader from '@/components/AppHeader';
 import DogAvatar from '@/components/DogAvatar';
 import UserRow from '@/components/admin/UserRow';
@@ -256,7 +257,11 @@ async function ProgressManager({ dogId }: { dogId: string }) {
             <h2 className="text-xl font-bold text-brand-cream">{dog.name}</h2>
             <p className="text-sm text-brand-muted">
               {dog.breed || 'ไม่ระบุพันธุ์'} ·{' '}
-              {dog.owner?.display_name ?? 'ยังไม่มีเจ้าของ'}
+              {dogOwners(dog).length
+                ? dogOwners(dog)
+                    .map((o) => o.display_name || o.id.slice(0, 6))
+                    .join(', ')
+                : 'ยังไม่มีเจ้าของ'}
             </p>
           </div>
         </div>

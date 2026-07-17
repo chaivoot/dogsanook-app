@@ -2,11 +2,14 @@ import { createServiceClient } from '@/lib/supabase/service';
 import type {
   Dog,
   DogLessonProgress,
+  DogWithOwners,
   Lesson,
   LessonProgressView,
   Profile,
   SessionPhoto,
 } from '@/lib/types';
+
+const DOG_WITH_OWNERS = '*, dog_owners(owner:profiles(id, display_name))';
 
 /** All profiles, pending first (admin user management). */
 export async function getAllProfiles(): Promise<Profile[]> {
@@ -39,41 +42,38 @@ export async function getLessonBySlug(slug: string): Promise<Lesson | null> {
   return (data as Lesson) ?? null;
 }
 
-export async function getDogById(
-  dogId: string,
-): Promise<(Dog & { owner: { display_name: string | null } | null }) | null> {
+export async function getDogById(dogId: string): Promise<DogWithOwners | null> {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from('dogs')
-    .select('*, owner:profiles!dogs_owner_id_fkey(display_name)')
+    .select(DOG_WITH_OWNERS)
     .eq('id', dogId)
     .maybeSingle();
-  return (data as Dog & { owner: { display_name: string | null } | null }) ?? null;
+  return (data as DogWithOwners) ?? null;
 }
 
-/** Dogs owned by a given profile (owner dashboard). */
+/** Dogs a given profile owns or co-owns (owner dashboard). */
 export async function getDogsForOwner(ownerId: string): Promise<Dog[]> {
   const supabase = createServiceClient();
   const { data } = await supabase
-    .from('dogs')
-    .select('*')
-    .eq('owner_id', ownerId)
-    .order('created_at', { ascending: true });
-  return (data as Dog[]) ?? [];
+    .from('dog_owners')
+    .select('dog:dogs(*)')
+    .eq('owner_id', ownerId);
+  const dogs = ((data as unknown as { dog: Dog | null }[]) ?? [])
+    .map((r) => r.dog)
+    .filter((d): d is Dog => !!d);
+  dogs.sort((a, b) => (a.created_at < b.created_at ? -1 : 1));
+  return dogs;
 }
 
-/** All dogs with their owner's display name (admin panel). */
-export async function getAllDogs(): Promise<
-  (Dog & { owner: { display_name: string | null } | null })[]
-> {
+/** All dogs with all of their owners (admin panel). */
+export async function getAllDogs(): Promise<DogWithOwners[]> {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from('dogs')
-    .select('*, owner:profiles!dogs_owner_id_fkey(display_name)')
+    .select(DOG_WITH_OWNERS)
     .order('created_at', { ascending: true });
-  return (data as (Dog & {
-    owner: { display_name: string | null } | null;
-  })[]) ?? [];
+  return (data as DogWithOwners[]) ?? [];
 }
 
 /**

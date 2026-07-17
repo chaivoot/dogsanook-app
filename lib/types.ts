@@ -22,6 +22,20 @@ export interface Dog {
   created_at: string;
 }
 
+/** A dog together with all of its owners (a household can share a dog). */
+export type DogWithOwners = Dog & {
+  dog_owners: { owner: { id: string; display_name: string | null } | null }[];
+};
+
+/** Flatten a DogWithOwners into a plain list of owner profiles. */
+export function dogOwners(
+  dog: DogWithOwners,
+): { id: string; display_name: string | null }[] {
+  return (dog.dog_owners ?? [])
+    .map((link) => link.owner)
+    .filter((o): o is { id: string; display_name: string | null } => !!o);
+}
+
 export interface Lesson {
   id: number;
   slug: string | null;
