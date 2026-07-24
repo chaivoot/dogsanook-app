@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { DogWithOwners, Profile } from '@/lib/types';
 import { dogOwners } from '@/lib/types';
 import DogAvatar from '@/components/DogAvatar';
+import DeleteDogAdminButton from '@/components/admin/DeleteDogAdminButton';
 import { addDogOwner, removeDogOwner, updateDogDetails } from '@/app/admin/actions';
 
 export default function DogRow({
@@ -121,6 +122,11 @@ export default function DogRow({
               บันทึก
             </button>
           </form>
+
+          <div className="border-t border-white/10 pt-4">
+            <p className="mb-2 text-xs text-brand-muted">โซนอันตราย</p>
+            <DeleteDogAdminButton dogId={dog.id} dogName={dog.name} />
+          </div>
         </div>
       </details>
     </div>

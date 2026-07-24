@@ -125,6 +125,15 @@ export async function removeDogOwner(formData: FormData) {
   revalidatePath('/admin');
 }
 
+/** Staff deletes a dog entirely (cascades to progress / check-ins / photos). */
+export async function deleteDogAsAdmin(formData: FormData) {
+  if (!(await ensureStaff())) return;
+  const dogId = String(formData.get('dogId'));
+  const admin = createServiceClient();
+  await admin.from('dogs').delete().eq('id', dogId);
+  revalidatePath('/admin');
+}
+
 export async function updateDogDetails(formData: FormData) {
   if (!(await ensureStaff())) return;
   const dogId = String(formData.get('dogId'));
