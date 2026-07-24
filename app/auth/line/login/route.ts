@@ -15,6 +15,13 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${appUrl}/?error=line_not_configured`);
   }
 
+  // Optional post-login destination (must be a relative path).
+  const nextParam = new URL(request.url).searchParams.get('next');
+  const next =
+    nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
+      ? nextParam
+      : null;
+
   const state = randomUUID();
   const nonce = randomUUID();
   const redirectUri = `${appUrl}/auth/line/callback`;
@@ -37,5 +44,6 @@ export async function GET(request: Request) {
   };
   res.cookies.set('line_oauth_state', state, opts);
   res.cookies.set('line_oauth_nonce', nonce, opts);
+  if (next) res.cookies.set('line_oauth_next', next, opts);
   return res;
 }

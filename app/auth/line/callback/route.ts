@@ -101,7 +101,15 @@ export async function GET(request: Request) {
 
   // Issue our signed session cookie
   const token = await createSessionToken(profileId);
-  const res = NextResponse.redirect(`${appUrl}/`);
+
+  // Post-login destination (relative path stashed at login time).
+  const nextCookie = cookies().get('line_oauth_next')?.value;
+  const dest =
+    nextCookie && nextCookie.startsWith('/') && !nextCookie.startsWith('//')
+      ? `${appUrl}${nextCookie}`
+      : `${appUrl}/`;
+
+  const res = NextResponse.redirect(dest);
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: true,
@@ -112,5 +120,6 @@ export async function GET(request: Request) {
   // clear the transient oauth cookies
   res.cookies.set('line_oauth_state', '', { path: '/', maxAge: 0 });
   res.cookies.set('line_oauth_nonce', '', { path: '/', maxAge: 0 });
+  res.cookies.set('line_oauth_next', '', { path: '/', maxAge: 0 });
   return res;
 }

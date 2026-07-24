@@ -5,6 +5,8 @@ import {
   getAllDogs,
   getDogProgress,
   getLessons,
+  getCampaignsWithCounts,
+  getClaims,
 } from '@/lib/data';
 import { dogOwners } from '@/lib/types';
 import AppHeader from '@/components/AppHeader';
@@ -17,10 +19,13 @@ import {
   uploadSessionPhoto,
   deleteSessionPhoto,
   updateLessonContent,
+  createCampaign,
+  toggleCampaign,
+  setClaimStatus,
 } from './actions';
 import { redirect } from 'next/navigation';
 
-type Tab = 'users' | 'dogs' | 'guides' | 'progress';
+type Tab = 'users' | 'dogs' | 'guides' | 'vouchers' | 'progress';
 
 export default async function AdminPage({
   searchParams,
@@ -50,6 +55,7 @@ export default async function AdminPage({
           <TabLink tab="users" current={tab} label="ผู้ใช้" badge={pendingCount} />
           <TabLink tab="dogs" current={tab} label="น้องหมา" />
           <TabLink tab="guides" current={tab} label="คู่มือ" />
+          <TabLink tab="vouchers" current={tab} label="Voucher" />
         </nav>
 
         {tab === 'users' && (
@@ -117,6 +123,8 @@ export default async function AdminPage({
         )}
 
         {tab === 'guides' && <GuidesEditor />}
+
+        {tab === 'vouchers' && <VoucherManager />}
 
         {tab === 'progress' && searchParams.dog && (
           <ProgressManager dogId={searchParams.dog} />
@@ -224,6 +232,162 @@ async function GuidesEditor() {
         );
       })}
     </section>
+  );
+}
+
+const CLAIM_STATUS: { value: string; label: string; cls: string }[] = [
+  { value: 'new', label: 'ใหม่', cls: 'bg-brand-gold/15 text-brand-gold' },
+  { value: 'contacted', label: 'ติดต่อแล้ว', cls: 'bg-brand-blue/15 text-brand-blue' },
+  { value: 'attended', label: 'มาเรียนแล้ว', cls: 'bg-brand-green/15 text-brand-green' },
+  { value: 'expired', label: 'หมดอายุ', cls: 'bg-white/10 text-brand-muted' },
+];
+
+async function VoucherManager() {
+  const [campaigns, claims] = await Promise.all([
+    getCampaignsWithCounts(),
+    getClaims(),
+  ]);
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://app.dogsanook.com';
+
+  return (
+    <div className="space-y-6">
+      {/* Create campaign */}
+      <details className="dark-card">
+        <summary className="cursor-pointer font-medium text-brand-cream">
+          + สร้างแคมเปญใหม่
+        </summary>
+        <form action={createCampaign} className="mt-4 space-y-3">
+          <div>
+            <label className="label">ชื่อแคมเปญ *</label>
+            <input name="name" required className="input" placeholder="เช่น ทดลองเรียนฟรี 1 คาบ" />
+          </div>
+          <div>
+            <label className="label">ลิงก์ (slug) *</label>
+            <input
+              name="slug"
+              required
+              className="input"
+              placeholder="เช่น free-trial-vetabc (a-z, 0-9, -)"
+            />
+            <p className="mt-1 text-xs text-brand-muted">
+              จะได้ลิงก์ {appUrl}/claim/<span className="text-brand-gold">slug</span>
+            </p>
+          </div>
+          <div>
+            <label className="label">พาร์ทเนอร์ (รพส.)</label>
+            <input name="partner" className="input" placeholder="ชื่อโรงพยาบาลสัตว์" />
+          </div>
+          <div>
+            <label className="label">คำอธิบาย (โชว์บนหน้าเคลม)</label>
+            <textarea name="description" rows={2} className="input" />
+          </div>
+          <div>
+            <label className="label">จำกัดจำนวนสิทธิ์ (เว้นว่าง = ไม่จำกัด)</label>
+            <input name="max_claims" inputMode="numeric" className="input" placeholder="เช่น 50" />
+          </div>
+          <button type="submit" className="btn-gold">
+            สร้างแคมเปญ
+          </button>
+        </form>
+      </details>
+
+      {/* Campaign list */}
+      <section className="space-y-3">
+        <h3 className="text-lg font-bold text-brand-cream">แคมเปญ</h3>
+        {campaigns.length === 0 ? (
+          <p className="text-sm text-brand-muted">ยังไม่มีแคมเปญ</p>
+        ) : (
+          campaigns.map((c) => (
+            <div key={c.id} className="dark-card">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-brand-cream">
+                    {c.name}{' '}
+                    <span
+                      className={`ml-1 rounded-full px-2 py-0.5 text-xs ${
+                        c.active
+                          ? 'bg-brand-green/15 text-brand-green'
+                          : 'bg-white/10 text-brand-muted'
+                      }`}
+                    >
+                      {c.active ? 'เปิดรับ' : 'ปิด'}
+                    </span>
+                  </p>
+                  {c.partner && (
+                    <p className="text-xs text-brand-muted">ร่วมกับ {c.partner}</p>
+                  )}
+                  <p className="mt-1 break-all text-xs text-brand-gold">
+                    {appUrl}/claim/{c.slug}
+                  </p>
+                  <p className="mt-1 text-xs text-brand-muted">
+                    เคลมแล้ว {c.claim_count}
+                    {c.max_claims != null ? ` / ${c.max_claims}` : ''} สิทธิ์
+                  </p>
+                </div>
+                <form action={toggleCampaign}>
+                  <input type="hidden" name="campaignId" value={c.id} />
+                  <input type="hidden" name="active" value={(!c.active).toString()} />
+                  <button type="submit" className="btn-ghost">
+                    {c.active ? 'ปิดรับ' : 'เปิดรับ'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          ))
+        )}
+      </section>
+
+      {/* Claims list */}
+      <section className="space-y-3">
+        <h3 className="text-lg font-bold text-brand-cream">
+          รายการเคลม ({claims.length})
+        </h3>
+        {claims.length === 0 ? (
+          <p className="text-sm text-brand-muted">ยังไม่มีคนเคลม</p>
+        ) : (
+          claims.map((claim) => (
+            <div key={claim.id} className="dark-card">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-brand-cream">
+                    {claim.dog?.name ?? 'ไม่ระบุน้อง'}
+                    {claim.dog?.breed ? ` · ${claim.dog.breed}` : ''}
+                  </p>
+                  <p className="text-xs text-brand-muted">
+                    โดย {claim.profile?.display_name ?? '—'} ·{' '}
+                    {claim.campaign?.name ?? ''}
+                  </p>
+                  {claim.contact && (
+                    <p className="text-xs text-brand-muted">ติดต่อ: {claim.contact}</p>
+                  )}
+                  <p className="mt-1 font-mono text-sm text-brand-gold">
+                    {claim.code}
+                  </p>
+                </div>
+                <form action={setClaimStatus} className="flex items-center gap-1">
+                  <input type="hidden" name="claimId" value={claim.id} />
+                  <select
+                    name="status"
+                    defaultValue={claim.status}
+                    className="rounded-lg border border-white/10 bg-brand-bg px-2 py-1.5 text-sm text-brand-cream"
+                  >
+                    {CLAIM_STATUS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="submit" className="btn-ghost">
+                    อัปเดต
+                  </button>
+                </form>
+              </div>
+            </div>
+          ))
+        )}
+      </section>
+    </div>
   );
 }
 

@@ -84,4 +84,28 @@ export interface LessonProgressView {
   progress?: DogLessonProgress;
 }
 
+export type ClaimStatus = 'new' | 'contacted' | 'attended' | 'expired';
+
+export interface VoucherCampaign {
+  id: string;
+  slug: string;
+  name: string;
+  partner: string | null;
+  description: string | null;
+  active: boolean;
+  max_claims: number | null;
+  created_at: string;
+}
+
+export interface VoucherClaim {
+  id: string;
+  campaign_id: string;
+  profile_id: string;
+  dog_id: string | null;
+  code: string;
+  contact: string | null;
+  status: ClaimStatus;
+  created_at: string;
+}
+
 export const STORAGE_BUCKET = 'dog-photos';

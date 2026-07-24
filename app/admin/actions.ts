@@ -202,6 +202,44 @@ export async function updateLessonContent(formData: FormData) {
   revalidatePath('/games', 'layout');
 }
 
+// --- Vouchers ----------------------------------------------------------------
+
+export async function createCampaign(formData: FormData) {
+  if (!(await ensureStaff())) return;
+  const name = String(formData.get('name') ?? '').trim();
+  const slugRaw = String(formData.get('slug') ?? '').trim().toLowerCase();
+  const slug = slugRaw.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+  if (!name || !slug) return;
+  const partner = String(formData.get('partner') ?? '').trim() || null;
+  const description = String(formData.get('description') ?? '').trim() || null;
+  const maxRaw = String(formData.get('max_claims') ?? '').trim();
+  const max_claims = maxRaw ? Number(maxRaw) : null;
+
+  const admin = createServiceClient();
+  await admin
+    .from('voucher_campaigns')
+    .insert({ name, slug, partner, description, max_claims });
+  revalidatePath('/admin');
+}
+
+export async function toggleCampaign(formData: FormData) {
+  if (!(await ensureStaff())) return;
+  const id = String(formData.get('campaignId'));
+  const active = formData.get('active') === 'true';
+  const admin = createServiceClient();
+  await admin.from('voucher_campaigns').update({ active }).eq('id', id);
+  revalidatePath('/admin');
+}
+
+export async function setClaimStatus(formData: FormData) {
+  if (!(await ensureStaff())) return;
+  const id = String(formData.get('claimId'));
+  const status = String(formData.get('status'));
+  const admin = createServiceClient();
+  await admin.from('voucher_claims').update({ status }).eq('id', id);
+  revalidatePath('/admin');
+}
+
 // --- Session photos ----------------------------------------------------------
 
 export async function uploadSessionPhoto(formData: FormData) {

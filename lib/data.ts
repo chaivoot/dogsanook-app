@@ -7,6 +7,8 @@ import type {
   LessonProgressView,
   Profile,
   SessionPhoto,
+  VoucherCampaign,
+  VoucherClaim,
 } from '@/lib/types';
 
 const DOG_WITH_OWNERS = '*, dog_owners(owner:profiles(id, display_name))';
@@ -119,4 +121,87 @@ export async function getDogProgress(dogId: string): Promise<{
   });
 
   return { lessons: views, photos: (photosRes.data as SessionPhoto[]) ?? [] };
+}
+
+// --- Vouchers ---------------------------------------------------------------
+
+export async function getCampaignBySlug(
+  slug: string,
+): Promise<VoucherCampaign | null> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('voucher_campaigns')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  return (data as VoucherCampaign) ?? null;
+}
+
+/** All campaigns with their claim counts (admin). */
+export async function getCampaignsWithCounts(): Promise<
+  (VoucherCampaign & { claim_count: number })[]
+> {
+  const supabase = createServiceClient();
+  const [campaignsRes, claimsRes] = await Promise.all([
+    supabase
+      .from('voucher_campaigns')
+      .select('*')
+      .order('created_at', { ascending: false }),
+    supabase.from('voucher_claims').select('campaign_id'),
+  ]);
+  const campaigns = (campaignsRes.data as VoucherCampaign[]) ?? [];
+  const claims = (claimsRes.data as { campaign_id: string }[]) ?? [];
+  const counts = new Map<string, number>();
+  for (const c of claims) {
+    counts.set(c.campaign_id, (counts.get(c.campaign_id) ?? 0) + 1);
+  }
+  return campaigns.map((c) => ({ ...c, claim_count: counts.get(c.id) ?? 0 }));
+}
+
+export async function countClaims(campaignId: string): Promise<number> {
+  const supabase = createServiceClient();
+  const { count } = await supabase
+    .from('voucher_claims')
+    .select('id', { count: 'exact', head: true })
+    .eq('campaign_id', campaignId);
+  return count ?? 0;
+}
+
+/** The current user's claim for a campaign, if any. */
+export async function getMyClaim(
+  campaignId: string,
+  profileId: string,
+): Promise<VoucherClaim | null> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('voucher_claims')
+    .select('*')
+    .eq('campaign_id', campaignId)
+    .eq('profile_id', profileId)
+    .maybeSingle();
+  return (data as VoucherClaim) ?? null;
+}
+
+/** All claims with claimer + dog + campaign info (admin). */
+export async function getClaims(): Promise<
+  (VoucherClaim & {
+    profile: { display_name: string | null } | null;
+    dog: { name: string; breed: string | null } | null;
+    campaign: { name: string } | null;
+  })[]
+> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('voucher_claims')
+    .select(
+      '*, profile:profiles(display_name), dog:dogs(name, breed), campaign:voucher_campaigns(name)',
+    )
+    .order('created_at', { ascending: false });
+  return (
+    (data as unknown as (VoucherClaim & {
+      profile: { display_name: string | null } | null;
+      dog: { name: string; breed: string | null } | null;
+      campaign: { name: string } | null;
+    })[]) ?? []
+  );
 }
