@@ -136,15 +136,6 @@ function ClaimForm({ slug }: { slug: string }) {
           placeholder="LINE ID สำหรับติดต่อกลับ"
         />
       </div>
-      <div>
-        <label className="label">อยากเล่าอะไรเกี่ยวกับน้อง (ไม่บังคับ)</label>
-        <textarea
-          name="notes"
-          rows={2}
-          className="input"
-          placeholder="เช่น อายุ นิสัย ปัญหาที่อยากแก้"
-        />
-      </div>
       <button type="submit" className="btn-gold w-full">
         ยืนยันรับสิทธิ์
       </button>
