@@ -104,6 +104,8 @@ export interface VoucherClaim {
   dog_id: string | null;
   code: string;
   contact: string | null;
+  phone: string | null;
+  line_id: string | null;
   status: ClaimStatus;
   created_at: string;
 }

@@ -362,7 +362,13 @@ async function VoucherManager() {
                     โดย {claim.profile?.display_name ?? '—'} ·{' '}
                     {claim.campaign?.name ?? ''}
                   </p>
-                  {claim.contact && (
+                  {claim.phone && (
+                    <p className="text-xs text-brand-muted">โทร: {claim.phone}</p>
+                  )}
+                  {claim.line_id && (
+                    <p className="text-xs text-brand-muted">LINE: {claim.line_id}</p>
+                  )}
+                  {claim.contact && !claim.phone && !claim.line_id && (
                     <p className="text-xs text-brand-muted">ติดต่อ: {claim.contact}</p>
                   )}
                   <p className="mt-1 font-mono text-sm text-brand-gold">

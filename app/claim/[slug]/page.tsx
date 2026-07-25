@@ -120,12 +120,20 @@ function ClaimForm({ slug }: { slug: string }) {
         <input name="breed" className="input" placeholder="เช่น ไทยหลังอาน / ผสม" />
       </div>
       <div>
-        <label className="label">เบอร์ติดต่อ</label>
+        <label className="label">เบอร์โทร</label>
         <input
-          name="contact"
+          name="phone"
           inputMode="tel"
           className="input"
-          placeholder="เบอร์โทร/LINE ที่ครูติดต่อกลับได้"
+          placeholder="เบอร์โทรที่ครูติดต่อกลับได้"
+        />
+      </div>
+      <div>
+        <label className="label">LINE ID</label>
+        <input
+          name="lineId"
+          className="input"
+          placeholder="LINE ID สำหรับติดต่อกลับ"
         />
       </div>
       <div>

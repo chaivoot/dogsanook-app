@@ -48,7 +48,8 @@ export async function claimVoucher(formData: FormData) {
   if (!dogName) redirect(back);
   const breed = String(formData.get('breed') ?? '').trim() || null;
   const notes = String(formData.get('notes') ?? '').trim() || null;
-  const contact = String(formData.get('contact') ?? '').trim() || null;
+  const phone = String(formData.get('phone') ?? '').trim() || null;
+  const lineId = String(formData.get('lineId') ?? '').trim() || null;
 
   // Create the claimer's dog.
   const { data: dog } = await admin
@@ -67,7 +68,8 @@ export async function claimVoucher(formData: FormData) {
     profile_id: profile.id,
     dog_id: dog?.id ?? null,
     code: genCode(),
-    contact,
+    phone,
+    line_id: lineId,
   });
 
   revalidatePath('/admin');

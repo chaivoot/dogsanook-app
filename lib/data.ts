@@ -183,13 +183,13 @@ export async function getMyClaim(
 }
 
 /** All claims with claimer + dog + campaign info (admin). */
-export async function getClaims(): Promise<
-  (VoucherClaim & {
-    profile: { display_name: string | null } | null;
-    dog: { name: string; breed: string | null } | null;
-    campaign: { name: string } | null;
-  })[]
-> {
+type ClaimWithRefs = VoucherClaim & {
+  profile: { display_name: string | null } | null;
+  dog: { name: string; breed: string | null } | null;
+  campaign: { name: string } | null;
+};
+
+export async function getClaims(): Promise<ClaimWithRefs[]> {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from('voucher_claims')
@@ -197,11 +197,5 @@ export async function getClaims(): Promise<
       '*, profile:profiles(display_name), dog:dogs(name, breed), campaign:voucher_campaigns(name)',
     )
     .order('created_at', { ascending: false });
-  return (
-    (data as unknown as (VoucherClaim & {
-      profile: { display_name: string | null } | null;
-      dog: { name: string; breed: string | null } | null;
-      campaign: { name: string } | null;
-    })[]) ?? []
-  );
+  return (data as unknown as ClaimWithRefs[]) ?? [];
 }
