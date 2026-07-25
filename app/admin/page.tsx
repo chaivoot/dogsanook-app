@@ -275,8 +275,12 @@ async function VoucherManager() {
             </p>
           </div>
           <div>
-            <label className="label">พาร์ทเนอร์ (รพส.)</label>
-            <input name="partner" className="input" placeholder="ชื่อโรงพยาบาลสัตว์" />
+            <label className="label">พาร์ทเนอร์ (ไม่บังคับ)</label>
+            <input
+              name="partner"
+              className="input"
+              placeholder="เช่น รพส. / งานอีเวนต์ / ฟาร์มที่รับน้องมา"
+            />
           </div>
           <div>
             <label className="label">คำอธิบาย (โชว์บนหน้าเคลม)</label>
