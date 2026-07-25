@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { createServiceClient } from '@/lib/supabase/service';
 import { getCurrentProfile, isStaff } from '@/lib/auth';
 import { uploadDogImage } from '@/lib/storage';
@@ -145,6 +146,7 @@ export async function updateDogDetails(formData: FormData) {
   const admin = createServiceClient();
   await admin.from('dogs').update({ name, breed, notes }).eq('id', dogId);
   revalidatePath('/admin');
+  redirect('/admin?tab=dogs&saved=1');
 }
 
 // --- Lesson progress (staff only) -------------------------------------------
@@ -240,6 +242,7 @@ export async function updateCampaign(formData: FormData) {
     .update({ name, slug, partner, description, max_claims })
     .eq('id', id);
   revalidatePath('/admin');
+  redirect('/admin?tab=vouchers&saved=1');
 }
 
 export async function toggleCampaign(formData: FormData) {

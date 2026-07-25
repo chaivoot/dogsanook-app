@@ -10,6 +10,7 @@ import {
 } from '@/lib/data';
 import { dogOwners } from '@/lib/types';
 import AppHeader from '@/components/AppHeader';
+import SubmitButton from '@/components/SubmitButton';
 import DogAvatar from '@/components/DogAvatar';
 import UserRow from '@/components/admin/UserRow';
 import DogRow from '@/components/admin/DogRow';
@@ -31,12 +32,13 @@ type Tab = 'users' | 'dogs' | 'guides' | 'vouchers' | 'progress';
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: { tab?: Tab; dog?: string };
+  searchParams: { tab?: Tab; dog?: string; saved?: string };
 }) {
   const profile = await requireProfile();
   if (!isStaff(profile)) redirect('/dashboard');
 
   const tab: Tab = searchParams.tab ?? 'users';
+  const saved = searchParams.saved === '1';
   const [profiles, dogs] = await Promise.all([
     getAllProfiles(),
     getAllDogs(),
@@ -50,6 +52,12 @@ export default async function AdminPage({
 
       <main className="mx-auto max-w-2xl px-5 py-6">
         <h1 className="mb-4 text-2xl font-bold text-brand-cream">แผงครู</h1>
+
+        {saved && (
+          <p className="mb-4 rounded-xl border border-brand-green/25 bg-brand-green/10 px-4 py-2.5 text-sm text-brand-green">
+            ✓ บันทึกเรียบร้อยแล้ว
+          </p>
+        )}
 
         {/* Tabs */}
         <nav className="mb-6 flex flex-wrap gap-2">
@@ -107,9 +115,7 @@ export default async function AdminPage({
                     className="block w-full text-sm text-brand-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-gold file:px-4 file:py-2 file:font-semibold file:text-brand-ink"
                   />
                 </div>
-                <button type="submit" className="btn-gold">
-                  เพิ่มน้อง
-                </button>
+                <SubmitButton pendingText="กำลังเพิ่ม…">เพิ่มน้อง</SubmitButton>
               </form>
             </details>
 
@@ -216,9 +222,7 @@ async function GuidesEditor() {
                 />
               </div>
               <div className="flex items-center gap-3">
-                <button type="submit" className="btn-gold">
-                  บันทึก
-                </button>
+                <SubmitButton>บันทึก</SubmitButton>
                 {lesson.slug && (
                   <Link
                     href={`/games/${lesson.slug}`}
@@ -299,9 +303,7 @@ async function VoucherManager() {
             <label className="label">จำกัดจำนวนสิทธิ์ (เว้นว่าง = ไม่จำกัด)</label>
             <input name="max_claims" inputMode="numeric" className="input" placeholder="เช่น 50" />
           </div>
-          <button type="submit" className="btn-gold">
-            สร้างแคมเปญ
-          </button>
+          <SubmitButton pendingText="กำลังสร้าง…">สร้างแคมเปญ</SubmitButton>
         </form>
       </details>
 
@@ -389,9 +391,7 @@ async function VoucherManager() {
                       className="input"
                     />
                   </div>
-                  <button type="submit" className="btn-gold">
-                    บันทึก
-                  </button>
+                  <SubmitButton>บันทึก</SubmitButton>
                 </form>
               </details>
             </div>
@@ -554,9 +554,7 @@ async function ProgressManager({ dogId }: { dogId: string }) {
               className="block w-full text-sm text-brand-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-gold file:px-4 file:py-2 file:font-semibold file:text-brand-ink"
             />
           </div>
-          <button type="submit" className="btn-gold">
-            อัปโหลดรูป
-          </button>
+          <SubmitButton pendingText="กำลังอัปโหลด…">อัปโหลดรูป</SubmitButton>
         </form>
 
         {photos.length > 0 && (

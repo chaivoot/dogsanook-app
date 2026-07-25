@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { DogWithOwners, Profile } from '@/lib/types';
 import { dogOwners } from '@/lib/types';
 import DogAvatar from '@/components/DogAvatar';
+import SubmitButton from '@/components/SubmitButton';
 import DeleteDogAdminButton from '@/components/admin/DeleteDogAdminButton';
 import { addDogOwner, removeDogOwner, updateDogDetails } from '@/app/admin/actions';
 
@@ -89,9 +90,9 @@ export default function DogRow({
                   ))}
                 </select>
               </div>
-              <button type="submit" className="btn-outline">
+              <SubmitButton className="btn-outline" pendingText="กำลังเพิ่ม…">
                 + เพิ่มเจ้าของ
-              </button>
+              </SubmitButton>
             </form>
             <p className="mt-1 text-xs text-brand-muted">
               เพิ่มได้หลายคน เช่น พ่อหมา + แม่หมา ช่วยกันดูน้องตัวเดียวกัน
@@ -118,9 +119,7 @@ export default function DogRow({
                 className="input"
               />
             </div>
-            <button type="submit" className="btn-gold">
-              บันทึก
-            </button>
+            <SubmitButton>บันทึก</SubmitButton>
           </form>
 
           <div className="border-t border-white/10 pt-4">

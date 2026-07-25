@@ -3,6 +3,7 @@ import type { Dog } from '@/lib/types';
 import { requireProfile } from '@/lib/auth';
 import { getDogsForOwner, getDogProgress } from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
+import SubmitButton from '@/components/SubmitButton';
 import DogAvatar from '@/components/DogAvatar';
 import ProgressSummary from '@/components/games/ProgressSummary';
 import Legend from '@/components/games/Legend';
@@ -78,9 +79,7 @@ export default async function DashboardPage({
                 className="block w-full text-sm text-brand-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-gold file:px-4 file:py-2 file:font-semibold file:text-brand-ink"
               />
             </div>
-            <button type="submit" className="btn-gold">
-              เพิ่มน้อง
-            </button>
+            <SubmitButton pendingText="กำลังเพิ่ม…">เพิ่มน้อง</SubmitButton>
           </form>
         </details>
       </main>
@@ -141,9 +140,7 @@ async function DogSection({
                   className="input"
                 />
               </div>
-              <button type="submit" className="btn-gold">
-                บันทึก
-              </button>
+              <SubmitButton>บันทึก</SubmitButton>
             </form>
 
             <form action={updateDogPhoto} className="space-y-2">
@@ -155,9 +152,9 @@ async function DogSection({
                 accept="image/*"
                 className="block w-full text-sm text-brand-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-gold file:px-4 file:py-2 file:font-semibold file:text-brand-ink"
               />
-              <button type="submit" className="btn-outline mt-2">
+              <SubmitButton className="btn-outline mt-2" pendingText="กำลังอัปโหลด…">
                 อัปโหลดรูป
-              </button>
+              </SubmitButton>
             </form>
 
             <div className="border-t border-white/10 pt-4">
@@ -239,9 +236,7 @@ function MediaConsentCard({ dog }: { dog: Dog }) {
       <form action={setMediaConsent} className="mt-3">
         <input type="hidden" name="dogId" value={dog.id} />
         <input type="hidden" name="consent" value="true" />
-        <button type="submit" className="btn-gold">
-          ยินยอม ✓
-        </button>
+        <SubmitButton pendingText="กำลังบันทึก…">ยินยอม ✓</SubmitButton>
       </form>
     </section>
   );
