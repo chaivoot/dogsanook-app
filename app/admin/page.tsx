@@ -11,6 +11,7 @@ import {
 import { dogOwners } from '@/lib/types';
 import AppHeader from '@/components/AppHeader';
 import SubmitButton from '@/components/SubmitButton';
+import MarkdownEditor from '@/components/MarkdownEditor';
 import DogAvatar from '@/components/DogAvatar';
 import UserRow from '@/components/admin/UserRow';
 import DogRow from '@/components/admin/DogRow';
@@ -212,13 +213,12 @@ async function GuidesEditor() {
                 />
               </div>
               <div>
-                <label className="label">เนื้อหาคู่มือ (Markdown)</label>
-                <textarea
+                <label className="label">เนื้อหาคู่มือ</label>
+                <MarkdownEditor
                   name="content"
                   defaultValue={lesson.content ?? ''}
                   rows={10}
-                  className="input font-mono text-sm"
-                  placeholder="วางเนื้อหาจากคู่มือได้เลย…"
+                  placeholder="วางเนื้อหาจากคู่มือได้เลย · กดปุ่มด้านบนเพื่อใส่หัวข้อ/ตัวหนา/รายการ"
                 />
               </div>
               <div className="flex items-center gap-3">
@@ -289,15 +289,11 @@ async function VoucherManager() {
           </div>
           <div>
             <label className="label">คำอธิบาย (โชว์บนหน้าเคลม)</label>
-            <textarea
+            <MarkdownEditor
               name="description"
               rows={6}
-              className="input font-mono text-sm"
-              placeholder={'รองรับ Markdown เช่น\n# หัวข้อใหญ่\n## หัวข้อรอง\n**ตัวหนา** · เว้นบรรทัดได้\n- ข้อ 1\n- ข้อ 2'}
+              placeholder="เล่ารายละเอียดแคมเปญ · กดปุ่มด้านบนเพื่อใส่หัวข้อ/ตัวหนา/รายการ"
             />
-            <p className="mt-1 text-xs text-brand-muted">
-              รองรับ Markdown: # หัวข้อ · **ตัวหนา** · - รายการ · เว้นบรรทัดได้
-            </p>
           </div>
           <div>
             <label className="label">จำกัดจำนวนสิทธิ์ (เว้นว่าง = ไม่จำกัด)</label>
@@ -371,16 +367,12 @@ async function VoucherManager() {
                     <input name="partner" defaultValue={c.partner ?? ''} className="input" />
                   </div>
                   <div>
-                    <label className="label">คำอธิบาย (Markdown)</label>
-                    <textarea
+                    <label className="label">คำอธิบาย</label>
+                    <MarkdownEditor
                       name="description"
                       defaultValue={c.description ?? ''}
                       rows={6}
-                      className="input font-mono text-sm"
                     />
-                    <p className="mt-1 text-xs text-brand-muted">
-                      รองรับ Markdown: # หัวข้อ · **ตัวหนา** · - รายการ · เว้นบรรทัดได้
-                    </p>
                   </div>
                   <div>
                     <label className="label">จำกัดจำนวนสิทธิ์ (เว้นว่าง = ไม่จำกัด)</label>
