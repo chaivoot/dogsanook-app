@@ -113,6 +113,26 @@ export async function updateDog(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
+/** Owner opts in / out of letting the teacher record photos & videos. */
+export async function setMediaConsent(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+  const consent = formData.get('consent') === 'true';
+
+  const admin = createServiceClient();
+  await admin
+    .from('dogs')
+    .update({
+      media_consent: consent,
+      media_consent_at: consent ? new Date().toISOString() : null,
+      media_consent_by: consent ? ownerId : null,
+    })
+    .eq('id', dogId);
+
+  revalidatePath('/dashboard');
+}
+
 /** Owner deletes their own dog (cascades to progress / check-ins / photos). */
 export async function deleteDog(formData: FormData) {
   const dogId = String(formData.get('dogId'));

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Dog } from '@/lib/types';
 import { requireProfile } from '@/lib/auth';
 import { getDogsForOwner, getDogProgress } from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
@@ -8,7 +9,7 @@ import Legend from '@/components/games/Legend';
 import OwnerGameCard from '@/components/games/OwnerGameCard';
 import PhotoGallery from '@/components/games/PhotoGallery';
 import DeleteDogButton from '@/components/DeleteDogButton';
-import { addDog, updateDog, updateDogPhoto } from './actions';
+import { addDog, updateDog, updateDogPhoto, setMediaConsent } from './actions';
 
 export default async function DashboardPage({
   searchParams,
@@ -167,6 +168,8 @@ async function DogSection({
         </details>
       </section>
 
+      <MediaConsentCard dog={dog} />
+
       <ProgressSummary lessons={lessons} />
 
       <section className="space-y-3">
@@ -188,6 +191,59 @@ async function DogSection({
         <PhotoGallery photos={photos} lessons={lessonList} />
       </section>
     </div>
+  );
+}
+
+function MediaConsentCard({ dog }: { dog: Dog }) {
+  if (dog.media_consent) {
+    const date = dog.media_consent_at
+      ? new Date(dog.media_consent_at).toLocaleDateString('th-TH', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      : '';
+    return (
+      <section className="dark-card border border-brand-green/25">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-medium text-brand-green">
+              ✓ ยินยอมให้บันทึกภาพ/วิดีโอแล้ว
+            </p>
+            <p className="mt-1 text-xs text-brand-muted">
+              ครูบันทึกภาพ/คลิปน้องระหว่างฝึกเพื่อส่งให้คุณได้
+              {date ? ` · ยินยอมเมื่อ ${date}` : ''}
+            </p>
+          </div>
+          <form action={setMediaConsent}>
+            <input type="hidden" name="dogId" value={dog.id} />
+            <input type="hidden" name="consent" value="false" />
+            <button type="submit" className="btn-ghost shrink-0">
+              ยกเลิก
+            </button>
+          </form>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="dark-card">
+      <p className="font-medium text-brand-cream">
+        📸 อนุญาตให้ครูบันทึกภาพ/วิดีโอ
+      </p>
+      <p className="mt-1 leading-relaxed text-sm text-brand-muted">
+        ระหว่างฝึก ครูอยากถ่ายรูป/คลิปของ{dog.name}
+        เพื่อบันทึกความคืบหน้าและส่งให้คุณดู กดยินยอมเพื่อให้ครูถ่ายและแชร์ให้คุณได้
+      </p>
+      <form action={setMediaConsent} className="mt-3">
+        <input type="hidden" name="dogId" value={dog.id} />
+        <input type="hidden" name="consent" value="true" />
+        <button type="submit" className="btn-gold">
+          ยินยอม ✓
+        </button>
+      </form>
+    </section>
   );
 }
 

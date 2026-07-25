@@ -20,6 +20,9 @@ export interface Dog {
   owner_id: string | null;
   notes: string | null;
   created_at: string;
+  media_consent: boolean;
+  media_consent_at: string | null;
+  media_consent_by: string | null;
 }
 
 /** A dog together with all of its owners (a household can share a dog). */

@@ -20,6 +20,7 @@ import {
   deleteSessionPhoto,
   updateLessonContent,
   createCampaign,
+  updateCampaign,
   toggleCampaign,
   setClaimStatus,
 } from './actions';
@@ -337,6 +338,51 @@ async function VoucherManager() {
                   </button>
                 </form>
               </div>
+
+              <details className="mt-3">
+                <summary className="cursor-pointer text-sm text-brand-gold">
+                  แก้ไขแคมเปญ
+                </summary>
+                <form action={updateCampaign} className="mt-3 space-y-3">
+                  <input type="hidden" name="campaignId" value={c.id} />
+                  <div>
+                    <label className="label">ชื่อแคมเปญ *</label>
+                    <input name="name" defaultValue={c.name} required className="input" />
+                  </div>
+                  <div>
+                    <label className="label">ลิงก์ (slug) *</label>
+                    <input name="slug" defaultValue={c.slug} required className="input" />
+                    <p className="mt-1 text-xs text-brand-muted">
+                      ⚠️ ถ้าเปลี่ยน slug ลิงก์/QR เดิมที่แจกไปแล้วจะใช้ไม่ได้
+                    </p>
+                  </div>
+                  <div>
+                    <label className="label">พาร์ทเนอร์</label>
+                    <input name="partner" defaultValue={c.partner ?? ''} className="input" />
+                  </div>
+                  <div>
+                    <label className="label">คำอธิบาย</label>
+                    <textarea
+                      name="description"
+                      defaultValue={c.description ?? ''}
+                      rows={2}
+                      className="input"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">จำกัดจำนวนสิทธิ์ (เว้นว่าง = ไม่จำกัด)</label>
+                    <input
+                      name="max_claims"
+                      defaultValue={c.max_claims ?? ''}
+                      inputMode="numeric"
+                      className="input"
+                    />
+                  </div>
+                  <button type="submit" className="btn-gold">
+                    บันทึก
+                  </button>
+                </form>
+              </details>
             </div>
           ))
         )}
@@ -446,6 +492,17 @@ async function ProgressManager({ dogId }: { dogId: string }) {
           👁 ดูมุมมองเจ้าของ
         </Link>
       </section>
+
+      {/* Media consent status — teacher checks before recording */}
+      {dog.media_consent ? (
+        <p className="rounded-xl border border-brand-green/25 bg-brand-green/10 px-4 py-2.5 text-sm text-brand-green">
+          ✓ เจ้าของยินยอมให้บันทึกภาพ/วิดีโอระหว่างฝึกแล้ว
+        </p>
+      ) : (
+        <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200">
+          ⚠️ เจ้าของยังไม่ยินยอมให้บันทึกภาพ/วิดีโอ — ควรขอความยินยอมก่อนถ่าย
+        </p>
+      )}
 
       <section className="space-y-3">
         <h3 className="text-lg font-bold text-brand-gold">มาร์กความคืบหน้า 10 เกม</h3>

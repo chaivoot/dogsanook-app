@@ -222,6 +222,26 @@ export async function createCampaign(formData: FormData) {
   revalidatePath('/admin');
 }
 
+export async function updateCampaign(formData: FormData) {
+  if (!(await ensureStaff())) return;
+  const id = String(formData.get('campaignId'));
+  const name = String(formData.get('name') ?? '').trim();
+  const slugRaw = String(formData.get('slug') ?? '').trim().toLowerCase();
+  const slug = slugRaw.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+  if (!name || !slug) return;
+  const partner = String(formData.get('partner') ?? '').trim() || null;
+  const description = String(formData.get('description') ?? '').trim() || null;
+  const maxRaw = String(formData.get('max_claims') ?? '').trim();
+  const max_claims = maxRaw ? Number(maxRaw) : null;
+
+  const admin = createServiceClient();
+  await admin
+    .from('voucher_campaigns')
+    .update({ name, slug, partner, description, max_claims })
+    .eq('id', id);
+  revalidatePath('/admin');
+}
+
 export async function toggleCampaign(formData: FormData) {
   if (!(await ensureStaff())) return;
   const id = String(formData.get('campaignId'));
