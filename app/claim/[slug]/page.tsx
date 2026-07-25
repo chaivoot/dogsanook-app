@@ -136,6 +136,17 @@ function ClaimForm({ slug }: { slug: string }) {
           placeholder="LINE ID สำหรับติดต่อกลับ"
         />
       </div>
+      <div>
+        <label className="label">
+          อะไรที่คุณรักในตัวน้องที่สุด? 🥰 (ไม่บังคับ)
+        </label>
+        <textarea
+          name="notes"
+          rows={2}
+          className="input"
+          placeholder="เช่น ตอนวิ่งมาหา · ยิ้มทักทายทุกเช้า · ขี้อ้อนสุด ๆ"
+        />
+      </div>
       <button type="submit" className="btn-gold w-full">
         ยืนยันรับสิทธิ์
       </button>

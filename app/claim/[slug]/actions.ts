@@ -47,13 +47,14 @@ export async function claimVoucher(formData: FormData) {
   const dogName = String(formData.get('dogName') ?? '').trim();
   if (!dogName) redirect(back);
   const breed = String(formData.get('breed') ?? '').trim() || null;
+  const notes = String(formData.get('notes') ?? '').trim() || null;
   const phone = String(formData.get('phone') ?? '').trim() || null;
   const lineId = String(formData.get('lineId') ?? '').trim() || null;
 
   // Create the claimer's dog.
   const { data: dog } = await admin
     .from('dogs')
-    .insert({ name: dogName, breed, owner_id: profile.id })
+    .insert({ name: dogName, breed, notes, owner_id: profile.id })
     .select('id')
     .single();
   if (dog) {
