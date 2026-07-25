@@ -122,7 +122,7 @@ function ClaimForm({ slug }: { slug: string }) {
       </div>
       <div>
         <label className="label">พันธุ์</label>
-        <input name="breed" className="input" placeholder="เช่น ไทยหลังอาน / ผสม" />
+        <input name="breed" className="input" placeholder="เช่น Shetland Sheepdog" />
       </div>
       <div>
         <label className="label">เบอร์โทร</label>

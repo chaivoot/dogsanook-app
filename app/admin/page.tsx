@@ -94,7 +94,7 @@ export default async function AdminPage({
                 </div>
                 <div>
                   <label className="label">พันธุ์</label>
-                  <input name="breed" className="input" />
+                  <input name="breed" className="input" placeholder="เช่น Shetland Sheepdog" />
                 </div>
                 <div>
                   <label className="label">เจ้าของ</label>
