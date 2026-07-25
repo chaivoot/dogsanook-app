@@ -12,6 +12,7 @@ import { dogOwners } from '@/lib/types';
 import AppHeader from '@/components/AppHeader';
 import SubmitButton from '@/components/SubmitButton';
 import MarkdownEditor from '@/components/MarkdownEditor';
+import QrButton from '@/components/QrButton';
 import DogAvatar from '@/components/DogAvatar';
 import UserRow from '@/components/admin/UserRow';
 import DogRow from '@/components/admin/DogRow';
@@ -336,13 +337,16 @@ async function VoucherManager() {
                     {c.max_claims != null ? ` / ${c.max_claims}` : ''} สิทธิ์
                   </p>
                 </div>
-                <form action={toggleCampaign}>
-                  <input type="hidden" name="campaignId" value={c.id} />
-                  <input type="hidden" name="active" value={(!c.active).toString()} />
-                  <button type="submit" className="btn-ghost">
-                    {c.active ? 'ปิดรับ' : 'เปิดรับ'}
-                  </button>
-                </form>
+                <div className="flex shrink-0 items-center gap-2">
+                  <QrButton url={`${appUrl}/claim/${c.slug}`} filename={`qr-${c.slug}`} />
+                  <form action={toggleCampaign}>
+                    <input type="hidden" name="campaignId" value={c.id} />
+                    <input type="hidden" name="active" value={(!c.active).toString()} />
+                    <button type="submit" className="btn-ghost">
+                      {c.active ? 'ปิดรับ' : 'เปิดรับ'}
+                    </button>
+                  </form>
+                </div>
               </div>
 
               <details className="mt-3">
