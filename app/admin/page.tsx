@@ -285,7 +285,15 @@ async function VoucherManager() {
           </div>
           <div>
             <label className="label">คำอธิบาย (โชว์บนหน้าเคลม)</label>
-            <textarea name="description" rows={2} className="input" />
+            <textarea
+              name="description"
+              rows={6}
+              className="input font-mono text-sm"
+              placeholder={'รองรับ Markdown เช่น\n# หัวข้อใหญ่\n## หัวข้อรอง\n**ตัวหนา** · เว้นบรรทัดได้\n- ข้อ 1\n- ข้อ 2'}
+            />
+            <p className="mt-1 text-xs text-brand-muted">
+              รองรับ Markdown: # หัวข้อ · **ตัวหนา** · - รายการ · เว้นบรรทัดได้
+            </p>
           </div>
           <div>
             <label className="label">จำกัดจำนวนสิทธิ์ (เว้นว่าง = ไม่จำกัด)</label>
@@ -361,13 +369,16 @@ async function VoucherManager() {
                     <input name="partner" defaultValue={c.partner ?? ''} className="input" />
                   </div>
                   <div>
-                    <label className="label">คำอธิบาย</label>
+                    <label className="label">คำอธิบาย (Markdown)</label>
                     <textarea
                       name="description"
                       defaultValue={c.description ?? ''}
-                      rows={2}
-                      className="input"
+                      rows={6}
+                      className="input font-mono text-sm"
                     />
+                    <p className="mt-1 text-xs text-brand-muted">
+                      รองรับ Markdown: # หัวข้อ · **ตัวหนา** · - รายการ · เว้นบรรทัดได้
+                    </p>
                   </div>
                   <div>
                     <label className="label">จำกัดจำนวนสิทธิ์ (เว้นว่าง = ไม่จำกัด)</label>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Logo from '@/components/Logo';
 import LineIcon from '@/components/LineIcon';
+import Markdown from '@/components/Markdown';
 import { getCurrentProfile } from '@/lib/auth';
 import { getCampaignBySlug, getMyClaim, countClaims } from '@/lib/data';
 import { claimVoucher } from './actions';
@@ -34,12 +35,13 @@ export default async function ClaimPage({
             ร่วมกับ {campaign.partner}
           </p>
         )}
-        {campaign.description && (
-          <p className="mt-3 leading-relaxed text-brand-muted">
-            {campaign.description}
-          </p>
-        )}
       </div>
+
+      {campaign.description && (
+        <div className="mt-5 rounded-card border border-white/5 bg-brand-bgSoft px-5 py-4">
+          <Markdown>{campaign.description}</Markdown>
+        </div>
+      )}
 
       <div className="mt-8">
         {!campaign.active ? (
