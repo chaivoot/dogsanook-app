@@ -408,7 +408,7 @@ async function VoucherManager() {
                     {claim.dog?.breed ? ` · ${claim.dog.breed}` : ''}
                   </p>
                   <p className="text-xs text-brand-muted">
-                    โดย {claim.profile?.display_name ?? '—'} ·{' '}
+                    LINE: {claim.profile?.display_name ?? '—'} ·{' '}
                     {claim.campaign?.name ?? ''}
                   </p>
                   {claim.phone && (

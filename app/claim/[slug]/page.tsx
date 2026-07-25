@@ -132,14 +132,9 @@ function ClaimForm({ slug }: { slug: string }) {
           className="input"
           placeholder="เบอร์โทรที่ครูติดต่อกลับได้"
         />
-      </div>
-      <div>
-        <label className="label">LINE ID</label>
-        <input
-          name="lineId"
-          className="input"
-          placeholder="LINE ID สำหรับติดต่อกลับ"
-        />
+        <p className="mt-1 text-xs text-brand-muted">
+          เราได้ชื่อ LINE ของคุณจากการเข้าสู่ระบบแล้ว · ขอเบอร์ไว้ติดต่อกลับ
+        </p>
       </div>
       <div>
         <label className="label">
