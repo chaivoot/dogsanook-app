@@ -7,6 +7,9 @@ import { getCurrentProfile } from '@/lib/auth';
 import { getCampaignBySlug, getMyClaim, countClaims } from '@/lib/data';
 import { claimVoucher } from './actions';
 
+// Always render the live campaign (never a cached copy).
+export const dynamic = 'force-dynamic';
+
 export default async function ClaimPage({
   params,
   searchParams,

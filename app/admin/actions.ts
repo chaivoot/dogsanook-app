@@ -222,6 +222,7 @@ export async function createCampaign(formData: FormData) {
     .from('voucher_campaigns')
     .insert({ name, slug, partner, description, max_claims });
   revalidatePath('/admin');
+  revalidatePath(`/claim/${slug}`);
 }
 
 export async function updateCampaign(formData: FormData) {
@@ -242,6 +243,7 @@ export async function updateCampaign(formData: FormData) {
     .update({ name, slug, partner, description, max_claims })
     .eq('id', id);
   revalidatePath('/admin');
+  revalidatePath(`/claim/${slug}`);
   redirect('/admin?tab=vouchers&saved=1');
 }
 

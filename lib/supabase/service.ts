@@ -11,6 +11,11 @@ export function createServiceClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
       auth: { autoRefreshToken: false, persistSession: false },
+      // Never let Next.js cache DB reads — this is a live app, not a blog.
+      // Without this, edited data can keep showing its old value.
+      global: {
+        fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+      },
     },
   );
 }
