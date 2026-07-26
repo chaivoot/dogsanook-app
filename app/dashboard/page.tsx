@@ -15,7 +15,7 @@ import { addDog, updateDog, updateDogPhoto, setMediaConsent } from './actions';
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { dog?: string };
+  searchParams: { dog?: string; mc?: string };
 }) {
   const profile = await requireProfile();
   const dogs = await getDogsForOwner(profile.id);
@@ -28,6 +28,21 @@ export default async function DashboardPage({
       <AppHeader profile={profile} />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
+        {searchParams.mc === 'ok' && (
+          <p className="mb-4 rounded-xl border border-brand-green/25 bg-brand-green/10 px-4 py-2.5 text-sm text-brand-green">
+            ✓ บันทึกการยินยอมเรียบร้อยแล้ว
+          </p>
+        )}
+        {searchParams.mc === 'err' && (
+          <p className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-200">
+            บันทึกไม่สำเร็จ (เกิดข้อผิดพลาดฝั่งฐานข้อมูล) — ลองใหม่หรือแจ้งแอดมิน
+          </p>
+        )}
+        {searchParams.mc === 'auth' && (
+          <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200">
+            ไม่มีสิทธิ์บันทึกการยินยอมสำหรับน้องตัวนี้
+          </p>
+        )}
         {dogs.length === 0 ? (
           <EmptyState />
         ) : (

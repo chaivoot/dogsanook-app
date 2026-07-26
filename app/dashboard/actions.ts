@@ -170,7 +170,7 @@ export async function setMediaConsent(formData: FormData) {
     : await requireDogOwner(dogId);
   if (!actorId) {
     console.error('[setMediaConsent] not authorized for dog', dogId);
-    return;
+    redirect(`/dashboard?dog=${dogId}&mc=auth`);
   }
 
   const consent = formData.get('consent') === 'true';
@@ -184,10 +184,15 @@ export async function setMediaConsent(formData: FormData) {
       media_consent_by: consent ? actorId : null,
     })
     .eq('id', dogId);
-  if (error) console.error('[setMediaConsent] update failed:', error.message);
 
   revalidatePath('/dashboard');
   revalidatePath('/admin');
+
+  if (error) {
+    console.error('[setMediaConsent] update failed:', error.message);
+    redirect(`/dashboard?dog=${dogId}&mc=err`);
+  }
+  redirect(`/dashboard?dog=${dogId}&mc=ok`);
 }
 
 /** Owner deletes their own dog (cascades to progress / check-ins / photos). */
