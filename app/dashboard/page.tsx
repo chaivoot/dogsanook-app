@@ -52,7 +52,7 @@ export default async function DashboardPage({
               </div>
             )}
 
-            {activeDog && <DogSection dog={activeDog} />}
+            {activeDog && <DogSection dog={activeDog} ownerId={profile.id} />}
           </>
         )}
 
@@ -89,8 +89,10 @@ export default async function DashboardPage({
 
 async function DogSection({
   dog,
+  ownerId,
 }: {
   dog: Awaited<ReturnType<typeof getDogsForOwner>>[number];
+  ownerId: string;
 }) {
   const { lessons, photos } = await getDogProgress(dog.id);
   const lessonList = lessons.map((l) => l.lesson);
@@ -185,7 +187,7 @@ async function DogSection({
         <h2 className="text-lg font-bold text-brand-cream">
           บันทึกภาพทุกครั้งที่ฝึก
         </h2>
-        <PhotoGallery photos={photos} lessons={lessonList} />
+        <PhotoGallery photos={photos} lessons={lessonList} deletableFor={ownerId} />
       </section>
     </div>
   );

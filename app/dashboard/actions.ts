@@ -113,6 +113,51 @@ export async function updateDog(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
+/** Owner uploads their own training photo for a lesson. */
+export async function uploadOwnerPhoto(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const lessonRaw = String(formData.get('lessonId') ?? '');
+  const lessonId = lessonRaw ? Number(lessonRaw) : null;
+  const file = formData.get('photo') as File | null;
+  if (!file || file.size === 0) return;
+
+  const url = await uploadDogImage(dogId, file, 'session');
+  if (!url) return;
+
+  const admin = createServiceClient();
+  await admin.from('session_photos').insert({
+    dog_id: dogId,
+    lesson_id: lessonId,
+    photo_url: url,
+    uploaded_by: ownerId,
+  });
+  revalidatePath('/dashboard');
+}
+
+/** Owner deletes a training photo they uploaded themselves. */
+export async function deleteOwnerPhoto(formData: FormData) {
+  const photoId = String(formData.get('photoId'));
+
+  const profile = await getCurrentProfile();
+  if (!profile || profile.status !== 'allowed') return;
+
+  const admin = createServiceClient();
+  // Only delete a photo the caller uploaded, on a dog they own.
+  const { data: photo } = await admin
+    .from('session_photos')
+    .select('id, dog_id, uploaded_by')
+    .eq('id', photoId)
+    .maybeSingle();
+  if (!photo || photo.uploaded_by !== profile.id) return;
+  if (!(await requireDogOwner(photo.dog_id))) return;
+
+  await admin.from('session_photos').delete().eq('id', photoId);
+  revalidatePath('/dashboard');
+}
+
 /** Owner opts in / out of letting the teacher record photos & videos. */
 export async function setMediaConsent(formData: FormData) {
   const dogId = String(formData.get('dogId'));
