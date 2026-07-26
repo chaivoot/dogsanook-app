@@ -37,9 +37,21 @@ export default function MediaUploader({
       : null
     : lessonId;
 
+  const MAX_MB = 50;
+
   async function handleFile(file: File) {
-    setBusy(true);
     setErr(null);
+
+    const sizeMb = file.size / (1024 * 1024);
+    if (sizeMb > MAX_MB) {
+      setErr(
+        `ไฟล์ใหญ่เกินไป (${sizeMb.toFixed(0)}MB) · สูงสุด ~${MAX_MB}MB — ลองถ่ายสั้นลง หรือถ่ายที่ 1080p`,
+      );
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+
+    setBusy(true);
     try {
       const ext = file.name.split('.').pop() || 'bin';
       const signed = await createMediaUploadUrl({ dogId, ext });
