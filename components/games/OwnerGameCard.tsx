@@ -1,6 +1,10 @@
 import Link from 'next/link';
-import type { LessonProgressView } from '@/lib/types';
-import { checkinLesson, undoCheckin } from '@/app/dashboard/actions';
+import type { LessonProgressView, SessionPhoto } from '@/lib/types';
+import {
+  checkinLesson,
+  undoCheckin,
+  deleteOwnerPhoto,
+} from '@/app/dashboard/actions';
 import MediaUploader from '@/components/MediaUploader';
 import { StatusRow } from './StatusPieces';
 
@@ -16,20 +20,80 @@ function GuideLink({ slug }: { slug: string | null }) {
   );
 }
 
+/** Thumbnails of this game's photos/clips, with delete on the owner's own. */
+function MediaStrip({
+  photos,
+  ownerId,
+  readOnly,
+}: {
+  photos: SessionPhoto[];
+  ownerId?: string;
+  readOnly: boolean;
+}) {
+  if (photos.length === 0) return null;
+  return (
+    <div className="mt-3 grid grid-cols-3 gap-2">
+      {photos.map((p) => {
+        const mine = !readOnly && !!ownerId && p.uploaded_by === ownerId;
+        return (
+          <figure
+            key={p.id}
+            className="relative overflow-hidden rounded-xl border border-black/5"
+          >
+            {p.media_type === 'video' ? (
+              <video
+                src={p.photo_url}
+                controls
+                className="aspect-square w-full bg-black object-cover"
+              />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={p.photo_url}
+                alt={p.caption ?? 'รูปการฝึก'}
+                className="aspect-square w-full object-cover"
+              />
+            )}
+            {mine && (
+              <form
+                action={deleteOwnerPhoto}
+                className="absolute right-1 top-1"
+              >
+                <input type="hidden" name="photoId" value={p.id} />
+                <button
+                  type="submit"
+                  aria-label="ลบ"
+                  className="rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white hover:bg-black/80"
+                >
+                  ลบ
+                </button>
+              </form>
+            )}
+          </figure>
+        );
+      })}
+    </div>
+  );
+}
+
 /** One cream game card for the owner dashboard (taught/can_do read-only).
- *  `readOnly` renders the exact same layout but without the check-in buttons —
- *  used for the staff "owner preview". */
+ *  Photos/clips for this game show right under the card. `readOnly` (staff
+ *  preview) hides the check-in and upload controls. */
 export default function OwnerGameCard({
   dogId,
   view,
+  photos = [],
+  ownerId,
   readOnly = false,
 }: {
   dogId: string;
   view: LessonProgressView;
+  photos?: SessionPhoto[];
+  ownerId?: string;
   readOnly?: boolean;
 }) {
   const { lesson, taught, can_do, practiced_count, progress } = view;
-  const locked = !progress && practiced_count === 0;
+  const locked = !progress && practiced_count === 0 && photos.length === 0;
   const num = String(lesson.id).padStart(2, '0');
 
   if (locked) {
@@ -70,34 +134,37 @@ export default function OwnerGameCard({
             tone="blue"
           />
           {!readOnly && (
-          <div className="flex items-center gap-1.5">
-            {practiced_count > 0 && (
-              <form action={undoCheckin}>
+            <div className="flex items-center gap-1.5">
+              {practiced_count > 0 && (
+                <form action={undoCheckin}>
+                  <input type="hidden" name="dogId" value={dogId} />
+                  <input type="hidden" name="lessonId" value={lesson.id} />
+                  <button
+                    type="submit"
+                    aria-label="ลบเช็คอินล่าสุด"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-brand-mutedInk transition hover:bg-black/5"
+                  >
+                    −
+                  </button>
+                </form>
+              )}
+              <form action={checkinLesson}>
                 <input type="hidden" name="dogId" value={dogId} />
                 <input type="hidden" name="lessonId" value={lesson.id} />
                 <button
                   type="submit"
-                  aria-label="ลบเช็คอินล่าสุด"
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-brand-mutedInk transition hover:bg-black/5"
+                  className="flex h-8 items-center gap-1 rounded-full bg-brand-blue px-3 text-sm font-semibold text-white transition hover:bg-brand-blueDark"
                 >
-                  −
+                  + เช็คอิน
                 </button>
               </form>
-            )}
-            <form action={checkinLesson}>
-              <input type="hidden" name="dogId" value={dogId} />
-              <input type="hidden" name="lessonId" value={lesson.id} />
-              <button
-                type="submit"
-                className="flex h-8 items-center gap-1 rounded-full bg-brand-blue px-3 text-sm font-semibold text-white transition hover:bg-brand-blueDark"
-              >
-                + เช็คอิน
-              </button>
-            </form>
-          </div>
+            </div>
           )}
         </div>
       </div>
+
+      {/* This game's photos/clips */}
+      <MediaStrip photos={photos} ownerId={ownerId} readOnly={readOnly} />
 
       {!readOnly && (
         <details className="mt-3 border-t border-black/10 pt-3">

@@ -22,6 +22,18 @@ export default async function OwnerPreviewPage({
   const { lessons, photos } = await getDogProgress(dog.id);
   const lessonList = lessons.map((l) => l.lesson);
 
+  const photosByLesson = new Map<number, typeof photos>();
+  const otherPhotos: typeof photos = [];
+  for (const p of photos) {
+    if (p.lesson_id == null) {
+      otherPhotos.push(p);
+    } else {
+      const arr = photosByLesson.get(p.lesson_id) ?? [];
+      arr.push(p);
+      photosByLesson.set(p.lesson_id, arr);
+    }
+  }
+
   return (
     <div className="min-h-dvh">
       <AppHeader profile={profile} />
@@ -76,18 +88,21 @@ export default async function OwnerPreviewPage({
                   key={view.lesson.id}
                   dogId={dog.id}
                   view={view}
+                  photos={photosByLesson.get(view.lesson.id) ?? []}
                   readOnly
                 />
               ))}
             </div>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-brand-cream">
-              บันทึกภาพทุกครั้งที่ฝึก
-            </h2>
-            <PhotoGallery photos={photos} lessons={lessonList} />
-          </section>
+          {otherPhotos.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-lg font-bold text-brand-cream">
+                รูป/วิดีโออื่นๆ
+              </h2>
+              <PhotoGallery photos={otherPhotos} lessons={lessonList} />
+            </section>
+          )}
         </div>
       </main>
     </div>

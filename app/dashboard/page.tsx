@@ -97,6 +97,19 @@ async function DogSection({
   const { lessons, photos } = await getDogProgress(dog.id);
   const lessonList = lessons.map((l) => l.lesson);
 
+  // Group media by game; keep uncategorized (no lesson) separate.
+  const photosByLesson = new Map<number, typeof photos>();
+  const otherPhotos: typeof photos = [];
+  for (const p of photos) {
+    if (p.lesson_id == null) {
+      otherPhotos.push(p);
+    } else {
+      const arr = photosByLesson.get(p.lesson_id) ?? [];
+      arr.push(p);
+      photosByLesson.set(p.lesson_id, arr);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Dog header */}
@@ -178,17 +191,29 @@ async function DogSection({
         <Legend />
         <div className="mt-3 space-y-3">
           {lessons.map((view) => (
-            <OwnerGameCard key={view.lesson.id} dogId={dog.id} view={view} />
+            <OwnerGameCard
+              key={view.lesson.id}
+              dogId={dog.id}
+              view={view}
+              photos={photosByLesson.get(view.lesson.id) ?? []}
+              ownerId={ownerId}
+            />
           ))}
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold text-brand-cream">
-          บันทึกภาพทุกครั้งที่ฝึก
-        </h2>
-        <PhotoGallery photos={photos} lessons={lessonList} deletableFor={ownerId} />
-      </section>
+      {otherPhotos.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-bold text-brand-cream">
+            รูป/วิดีโออื่นๆ
+          </h2>
+          <PhotoGallery
+            photos={otherPhotos}
+            lessons={lessonList}
+            deletableFor={ownerId}
+          />
+        </section>
+      )}
     </div>
   );
 }
