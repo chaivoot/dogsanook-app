@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createServiceClient } from '@/lib/supabase/service';
-import { getCurrentProfile } from '@/lib/auth';
+import { getCurrentProfile, isStaff } from '@/lib/auth';
 import { uploadDogImage } from '@/lib/storage';
 
 /** Confirms the current approved user owns/co-owns `dogId`; returns their id. */
@@ -158,24 +158,36 @@ export async function deleteOwnerPhoto(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
-/** Owner opts in / out of letting the teacher record photos & videos. */
+/** Opt a dog in / out of letting the teacher record photos & videos.
+ *  Allowed for an owner of the dog, or staff (e.g. recording verbal consent). */
 export async function setMediaConsent(formData: FormData) {
   const dogId = String(formData.get('dogId'));
-  const ownerId = await requireDogOwner(dogId);
-  if (!ownerId) return;
+
+  const profile = await getCurrentProfile();
+  if (!profile || profile.status !== 'allowed') return;
+  const actorId = isStaff(profile)
+    ? profile.id
+    : await requireDogOwner(dogId);
+  if (!actorId) {
+    console.error('[setMediaConsent] not authorized for dog', dogId);
+    return;
+  }
+
   const consent = formData.get('consent') === 'true';
 
   const admin = createServiceClient();
-  await admin
+  const { error } = await admin
     .from('dogs')
     .update({
       media_consent: consent,
       media_consent_at: consent ? new Date().toISOString() : null,
-      media_consent_by: consent ? ownerId : null,
+      media_consent_by: consent ? actorId : null,
     })
     .eq('id', dogId);
+  if (error) console.error('[setMediaConsent] update failed:', error.message);
 
   revalidatePath('/dashboard');
+  revalidatePath('/admin');
 }
 
 /** Owner deletes their own dog (cascades to progress / check-ins / photos). */
