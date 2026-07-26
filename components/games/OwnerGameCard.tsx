@@ -1,11 +1,7 @@
 import Link from 'next/link';
 import type { LessonProgressView } from '@/lib/types';
-import {
-  checkinLesson,
-  undoCheckin,
-  uploadOwnerPhoto,
-} from '@/app/dashboard/actions';
-import SubmitButton from '@/components/SubmitButton';
+import { checkinLesson, undoCheckin } from '@/app/dashboard/actions';
+import MediaUploader from '@/components/MediaUploader';
 import { StatusRow } from './StatusPieces';
 
 function GuideLink({ slug }: { slug: string | null }) {
@@ -106,25 +102,11 @@ export default function OwnerGameCard({
       {!readOnly && (
         <details className="mt-3 border-t border-black/10 pt-3">
           <summary className="cursor-pointer text-sm font-medium text-brand-blue">
-            📷 เพิ่มรูปการฝึกของฉัน
+            📷 เพิ่มรูป/วิดีโอการฝึกของฉัน
           </summary>
-          <form action={uploadOwnerPhoto} className="mt-2 space-y-2">
-            <input type="hidden" name="dogId" value={dogId} />
-            <input type="hidden" name="lessonId" value={lesson.id} />
-            <input
-              type="file"
-              name="photo"
-              accept="image/*"
-              required
-              className="block w-full text-sm text-brand-mutedInk file:mr-3 file:rounded-full file:border-0 file:bg-brand-blue file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white"
-            />
-            <SubmitButton
-              className="rounded-full bg-brand-blue px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-blueDark disabled:opacity-60"
-              pendingText="กำลังอัปโหลด…"
-            >
-              อัปโหลดรูป
-            </SubmitButton>
-          </form>
+          <div className="mt-2">
+            <MediaUploader dogId={dogId} lessonId={lesson.id} />
+          </div>
         </details>
       )}
     </div>

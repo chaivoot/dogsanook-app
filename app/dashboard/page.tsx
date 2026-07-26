@@ -194,37 +194,8 @@ async function DogSection({
 }
 
 function MediaConsentCard({ dog }: { dog: Dog }) {
-  if (dog.media_consent) {
-    const date = dog.media_consent_at
-      ? new Date(dog.media_consent_at).toLocaleDateString('th-TH', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-        })
-      : '';
-    return (
-      <section className="dark-card border border-brand-green/25">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-medium text-brand-green">
-              ✓ ยินยอมให้บันทึกภาพ/วิดีโอแล้ว
-            </p>
-            <p className="mt-1 text-xs text-brand-muted">
-              ครูบันทึกภาพ/คลิปน้องระหว่างฝึกเพื่อส่งให้คุณได้
-              {date ? ` · ยินยอมเมื่อ ${date}` : ''}
-            </p>
-          </div>
-          <form action={setMediaConsent}>
-            <input type="hidden" name="dogId" value={dog.id} />
-            <input type="hidden" name="consent" value="false" />
-            <button type="submit" className="btn-ghost shrink-0">
-              ยกเลิก
-            </button>
-          </form>
-        </div>
-      </section>
-    );
-  }
+  // Once consented, the prompt disappears — no need to keep nudging.
+  if (dog.media_consent) return null;
 
   return (
     <section className="dark-card">

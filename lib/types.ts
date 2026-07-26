@@ -73,6 +73,7 @@ export interface SessionPhoto {
   dog_id: string;
   lesson_id: number | null;
   photo_url: string;
+  media_type: 'image' | 'video';
   caption: string | null;
   uploaded_by: string | null;
   created_at: string;

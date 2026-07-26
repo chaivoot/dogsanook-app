@@ -13,13 +13,13 @@ import AppHeader from '@/components/AppHeader';
 import SubmitButton from '@/components/SubmitButton';
 import MarkdownEditor from '@/components/MarkdownEditor';
 import QrButton from '@/components/QrButton';
+import MediaUploader from '@/components/MediaUploader';
 import DogAvatar from '@/components/DogAvatar';
 import UserRow from '@/components/admin/UserRow';
 import DogRow from '@/components/admin/DogRow';
 import AdminGameCard from '@/components/games/AdminGameCard';
 import {
   createDog,
-  uploadSessionPhoto,
   deleteSessionPhoto,
   updateLessonContent,
   createCampaign,
@@ -521,37 +521,11 @@ async function ProgressManager({ dogId }: { dogId: string }) {
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-lg font-bold text-brand-cream">รูปการฝึก</h3>
+        <h3 className="text-lg font-bold text-brand-cream">รูป/วิดีโอการฝึก</h3>
 
-        <form action={uploadSessionPhoto} className="dark-card space-y-3">
-          <input type="hidden" name="dogId" value={dogId} />
-          <div>
-            <label className="label">เกม (ไม่บังคับ)</label>
-            <select name="lessonId" className="input" defaultValue="">
-              <option value="">— ไม่ระบุเกม —</option>
-              {lessonList.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {String(l.id).padStart(2, '0')} · {l.name_th}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label">คำบรรยาย</label>
-            <input name="caption" className="input" placeholder="เช่น ครั้งที่ 6 - Hand Target" />
-          </div>
-          <div>
-            <label className="label">รูป</label>
-            <input
-              type="file"
-              name="photo"
-              accept="image/*"
-              required
-              className="block w-full text-sm text-brand-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-gold file:px-4 file:py-2 file:font-semibold file:text-brand-ink"
-            />
-          </div>
-          <SubmitButton pendingText="กำลังอัปโหลด…">อัปโหลดรูป</SubmitButton>
-        </form>
+        <div className="dark-card">
+          <MediaUploader dogId={dogId} withCaption lessons={lessonList} />
+        </div>
 
         {photos.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -560,19 +534,27 @@ async function ProgressManager({ dogId }: { dogId: string }) {
                 key={photo.id}
                 className="overflow-hidden rounded-2xl border border-white/5 bg-brand-bgSoft"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photo.photo_url}
-                  alt={photo.caption ?? 'รูปการฝึก'}
-                  className="aspect-square w-full object-cover"
-                />
+                {photo.media_type === 'video' ? (
+                  <video
+                    src={photo.photo_url}
+                    controls
+                    className="aspect-square w-full bg-black object-cover"
+                  />
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={photo.photo_url}
+                    alt={photo.caption ?? 'รูปการฝึก'}
+                    className="aspect-square w-full object-cover"
+                  />
+                )}
                 <figcaption className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-brand-muted">
                   <span className="truncate">{photo.caption ?? 'การฝึก'}</span>
                   <form action={deleteSessionPhoto}>
                     <input type="hidden" name="photoId" value={photo.id} />
                     <button
                       type="submit"
-                      aria-label="ลบรูป"
+                      aria-label="ลบ"
                       className="text-red-300 hover:text-red-200"
                     >
                       ลบ

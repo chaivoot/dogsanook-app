@@ -32,12 +32,20 @@ export default function PhotoGallery({
             key={photo.id}
             className="overflow-hidden rounded-2xl border border-white/5 bg-brand-bgSoft"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photo.photo_url}
-              alt={photo.caption ?? 'รูปการฝึก'}
-              className="aspect-square w-full object-cover"
-            />
+            {photo.media_type === 'video' ? (
+              <video
+                src={photo.photo_url}
+                controls
+                className="aspect-square w-full bg-black object-cover"
+              />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={photo.photo_url}
+                alt={photo.caption ?? 'รูปการฝึก'}
+                className="aspect-square w-full object-cover"
+              />
+            )}
             <figcaption className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-brand-muted">
               <span className="truncate">
                 {photo.caption ??
