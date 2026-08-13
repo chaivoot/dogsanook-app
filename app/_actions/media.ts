@@ -77,3 +77,27 @@ export async function recordSessionMedia(input: {
   revalidatePath('/admin');
   return { ok: true };
 }
+
+/** Set a dog's profile photo from an already-uploaded storage path. */
+export async function setDogProfilePhoto(input: {
+  dogId: string;
+  path: string;
+}): Promise<{ ok: true } | { error: string }> {
+  const who = await authorize(input.dogId);
+  if (!who) return { error: 'unauthorized' };
+
+  const admin = createServiceClient();
+  const {
+    data: { publicUrl },
+  } = admin.storage.from(STORAGE_BUCKET).getPublicUrl(input.path);
+
+  const { error } = await admin
+    .from('dogs')
+    .update({ photo_url: publicUrl })
+    .eq('id', input.dogId);
+  if (error) return { error: 'update_failed' };
+
+  revalidatePath('/dashboard');
+  revalidatePath('/admin');
+  return { ok: true };
+}

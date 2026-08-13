@@ -3,6 +3,7 @@ import type { DogWithOwners, Profile } from '@/lib/types';
 import { dogOwners } from '@/lib/types';
 import DogAvatar from '@/components/DogAvatar';
 import SubmitButton from '@/components/SubmitButton';
+import ProfilePhotoUploader from '@/components/ProfilePhotoUploader';
 import DeleteDogAdminButton from '@/components/admin/DeleteDogAdminButton';
 import { addDogOwner, removeDogOwner, updateDogDetails } from '@/app/admin/actions';
 
@@ -121,6 +122,12 @@ export default function DogRow({
             </div>
             <SubmitButton>บันทึก</SubmitButton>
           </form>
+
+          {/* Profile photo */}
+          <div className="border-t border-white/10 pt-4">
+            <label className="label">รูปน้อง</label>
+            <ProfilePhotoUploader dogId={dog.id} />
+          </div>
 
           <div className="border-t border-white/10 pt-4">
             <p className="mb-2 text-xs text-brand-muted">โซนอันตราย</p>

@@ -4,13 +4,14 @@ import { requireProfile } from '@/lib/auth';
 import { getDogsForOwner, getDogProgress } from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
 import SubmitButton from '@/components/SubmitButton';
+import ProfilePhotoUploader from '@/components/ProfilePhotoUploader';
 import DogAvatar from '@/components/DogAvatar';
 import ProgressSummary from '@/components/games/ProgressSummary';
 import Legend from '@/components/games/Legend';
 import OwnerGameCard from '@/components/games/OwnerGameCard';
 import PhotoGallery from '@/components/games/PhotoGallery';
 import DeleteDogButton from '@/components/DeleteDogButton';
-import { addDog, updateDog, updateDogPhoto, setMediaConsent } from './actions';
+import { addDog, updateDog, setMediaConsent } from './actions';
 
 export default async function DashboardPage({
   searchParams,
@@ -173,19 +174,10 @@ async function DogSection({
               <SubmitButton>บันทึก</SubmitButton>
             </form>
 
-            <form action={updateDogPhoto} className="space-y-2">
-              <input type="hidden" name="dogId" value={dog.id} />
+            <div className="space-y-2">
               <label className="label">รูปน้อง</label>
-              <input
-                type="file"
-                name="photo"
-                accept="image/*"
-                className="block w-full text-sm text-brand-muted file:mr-3 file:rounded-full file:border-0 file:bg-brand-gold file:px-4 file:py-2 file:font-semibold file:text-brand-ink"
-              />
-              <SubmitButton className="btn-outline mt-2" pendingText="กำลังอัปโหลด…">
-                อัปโหลดรูป
-              </SubmitButton>
-            </form>
+              <ProfilePhotoUploader dogId={dog.id} />
+            </div>
 
             <div className="border-t border-white/10 pt-4">
               <p className="mb-2 text-xs text-brand-muted">โซนอันตราย</p>
