@@ -3,6 +3,23 @@ import Logo from '@/components/Logo';
 import LoginButton from '@/components/LoginButton';
 import { getCurrentProfile, isStaff } from '@/lib/auth';
 
+function errorMessage(code: string): string {
+  switch (code) {
+    case 'bad_state':
+      return 'เซสชันหมดอายุหรือถูกขัดจังหวะ — กดเข้าสู่ระบบด้วย LINE อีกครั้ง';
+    case 'missing_code':
+      return 'ไม่ได้รับข้อมูลจาก LINE — ลองใหม่อีกครั้ง';
+    case 'line_token_exchange_failed':
+      return 'เชื่อมต่อกับ LINE ไม่สำเร็จ — ลองใหม่อีกครั้ง';
+    case 'profile_create_failed':
+      return 'สร้างบัญชีไม่สำเร็จ — ลองใหม่ หรือแจ้งแอดมิน';
+    case 'access_denied':
+      return 'คุณยกเลิกการเข้าสู่ระบบ';
+    default:
+      return 'เข้าสู่ระบบไม่สำเร็จ ลองใหม่อีกครั้ง';
+  }
+}
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -30,9 +47,12 @@ export default async function LoginPage({
         </p>
 
         {searchParams?.error && (
-          <p className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-            เข้าสู่ระบบไม่สำเร็จ ลองใหม่อีกครั้ง
-          </p>
+          <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <p>{errorMessage(searchParams.error)}</p>
+            <p className="mt-1 text-xs text-red-200/60">
+              รหัส: {searchParams.error}
+            </p>
+          </div>
         )}
 
         <div className="mt-8">
