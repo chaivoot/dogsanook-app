@@ -82,9 +82,11 @@ export async function GET(request: Request) {
   let profileId = existing?.id as string | undefined;
 
   if (!profileId) {
+    // New signups are auto-approved as owners — they get the full owner
+    // experience right away (no manual approval step).
     const { data: created, error } = await admin
       .from('profiles')
-      .insert({ line_user_id: sub, display_name: name })
+      .insert({ line_user_id: sub, display_name: name, status: 'allowed' })
       .select('id')
       .single();
     if (error || !created) {

@@ -1,30 +1,45 @@
-import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { requireProfile, isStaff } from '@/lib/auth';
-import { getLessonBySlug } from '@/lib/data';
+import { notFound } from 'next/navigation';
+import Logo from '@/components/Logo';
 import AppHeader from '@/components/AppHeader';
 import Markdown from '@/components/Markdown';
+import { getCurrentProfile, isStaff } from '@/lib/auth';
+import { getLessonBySlug } from '@/lib/data';
+
+// Public page — anyone can read the guides.
+export const dynamic = 'force-dynamic';
 
 export default async function GameGuidePage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const profile = await requireProfile();
   const lesson = await getLessonBySlug(params.slug);
   if (!lesson) notFound();
 
+  const profile = await getCurrentProfile();
   const num = String(lesson.id).padStart(2, '0');
+  const backHref = profile ? (isStaff(profile) ? '/admin' : '/dashboard') : '/';
 
   return (
     <div className="min-h-dvh">
-      <AppHeader profile={profile} />
+      {profile ? (
+        <AppHeader profile={profile} />
+      ) : (
+        <header className="sticky top-0 z-10 border-b border-white/5 bg-brand-bg/90 backdrop-blur">
+          <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-5 py-3">
+            <Link href="/">
+              <Logo />
+            </Link>
+            <Link href="/" className="btn-ghost">
+              เข้าสู่ระบบ
+            </Link>
+          </div>
+        </header>
+      )}
 
       <main className="mx-auto max-w-2xl px-5 py-6">
-        <Link
-          href={isStaff(profile) ? '/admin' : '/dashboard'}
-          className="text-sm text-brand-gold"
-        >
+        <Link href={backHref} className="text-sm text-brand-gold">
           ← กลับ
         </Link>
 
@@ -51,6 +66,20 @@ export default async function GameGuidePage({
             </p>
           )}
         </div>
+
+        {!profile && (
+          <div className="mt-10 rounded-card border border-brand-teal/25 bg-brand-teal/10 px-5 py-4 text-center">
+            <p className="font-medium text-brand-cream">
+              อยากให้น้องเรียนกับครูหมาสนุกไหม? 🐕
+            </p>
+            <p className="mt-1 text-sm text-brand-muted">
+              หัวใจอยู่ที่การสอนหน้างาน — เข้าสู่ระบบเพื่อติดตามพัฒนาการน้อง
+            </p>
+            <Link href="/" className="btn-gold mt-4">
+              เข้าสู่ระบบด้วย LINE
+            </Link>
+          </div>
+        )}
       </main>
     </div>
   );

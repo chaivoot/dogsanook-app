@@ -10,12 +10,13 @@ import { verifySessionToken, SESSION_COOKIE } from '@/lib/session';
 export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Reachable without an approved account: login, the LINE auth routes, and
-  // the public voucher-claim pages (pending users must be able to claim).
+  // Reachable without an approved account: login, the LINE auth routes, the
+  // voucher-claim pages, and the public game guides.
   const isPublicPath =
     pathname === '/' ||
     pathname.startsWith('/auth') ||
-    pathname.startsWith('/claim');
+    pathname.startsWith('/claim') ||
+    pathname.startsWith('/games');
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const payload = await verifySessionToken(token);
