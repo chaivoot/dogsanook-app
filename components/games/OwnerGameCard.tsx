@@ -8,11 +8,10 @@ import {
 import MediaUploader from '@/components/MediaUploader';
 import { StatusRow } from './StatusPieces';
 
-function GuideLink({ slug }: { slug: string | null }) {
-  if (!slug) return null;
+function GuideLink({ to }: { to: string | number }) {
   return (
     <Link
-      href={`/games/${slug}`}
+      href={`/games/${to}`}
       className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-teal hover:underline"
     >
       ดูคู่มือเกม →
@@ -106,7 +105,7 @@ export default function OwnerGameCard({
           </h3>
         </div>
         <p className="mt-2 text-xs text-brand-mutedInk">ยังไม่ถึง · รอเรียน</p>
-        <GuideLink slug={lesson.slug} />
+        <GuideLink to={lesson.slug ?? lesson.id} />
       </div>
     );
   }
@@ -119,7 +118,7 @@ export default function OwnerGameCard({
           <h3 className="text-lg font-semibold text-brand-ink">
             {lesson.name_th}
           </h3>
-          <GuideLink slug={lesson.slug} />
+          <GuideLink to={lesson.slug ?? lesson.id} />
         </div>
       </div>
 

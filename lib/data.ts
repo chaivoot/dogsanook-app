@@ -34,12 +34,15 @@ export async function getLessons(): Promise<Lesson[]> {
   return (data as Lesson[]) ?? [];
 }
 
+/** Look up a lesson by slug, or by numeric id (fallback when slug is missing). */
 export async function getLessonBySlug(slug: string): Promise<Lesson | null> {
   const supabase = createServiceClient();
+  const column = /^\d+$/.test(slug) ? 'id' : 'slug';
+  const value = column === 'id' ? Number(slug) : slug;
   const { data } = await supabase
     .from('lessons')
     .select('*')
-    .eq('slug', slug)
+    .eq(column, value)
     .maybeSingle();
   return (data as Lesson) ?? null;
 }

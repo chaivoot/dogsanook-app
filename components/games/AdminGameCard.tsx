@@ -21,14 +21,12 @@ export default function AdminGameCard({
           <h3 className="text-lg font-semibold text-brand-ink">
             {lesson.name_th}
           </h3>
-          {lesson.slug && (
-            <Link
-              href={`/games/${lesson.slug}`}
-              className="text-sm font-medium text-brand-teal hover:underline"
-            >
-              ดูคู่มือ →
-            </Link>
-          )}
+          <Link
+            href={`/games/${lesson.slug ?? lesson.id}`}
+            className="text-sm font-medium text-brand-teal hover:underline"
+          >
+            ดูคู่มือ →
+          </Link>
         </div>
       </div>
 

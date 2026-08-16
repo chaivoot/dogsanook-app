@@ -224,14 +224,12 @@ async function GuidesEditor() {
               </div>
               <div className="flex items-center gap-3">
                 <SubmitButton>บันทึก</SubmitButton>
-                {lesson.slug && (
-                  <Link
-                    href={`/games/${lesson.slug}`}
-                    className="text-sm text-brand-teal hover:underline"
-                  >
-                    เปิดหน้าคู่มือ →
-                  </Link>
-                )}
+                <Link
+                  href={`/games/${lesson.slug ?? lesson.id}`}
+                  className="text-sm text-brand-teal hover:underline"
+                >
+                  เปิดหน้าคู่มือ →
+                </Link>
               </div>
             </form>
           </details>
