@@ -367,6 +367,31 @@ export async function addVaccination(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
+/** Owner edits an existing vaccination record (fix a typo / wrong date). */
+export async function updateVaccination(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const vaccId = String(formData.get('vaccId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const name = String(formData.get('name') ?? '').trim();
+  if (!name) return;
+
+  const admin = createServiceClient();
+  await admin
+    .from('vaccinations')
+    .update({
+      name,
+      given_on: opt(formData, 'given_on'),
+      next_due_on: opt(formData, 'next_due_on'),
+      clinic: opt(formData, 'clinic'),
+    })
+    .eq('id', vaccId)
+    .eq('dog_id', dogId);
+
+  revalidatePath('/dashboard');
+}
+
 /** Owner deletes a vaccination record. */
 export async function deleteVaccination(formData: FormData) {
   const dogId = String(formData.get('dogId'));

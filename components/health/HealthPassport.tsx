@@ -8,6 +8,7 @@ import {
   saveDogHealth,
   logWeight,
   addVaccination,
+  updateVaccination,
   deleteVaccination,
 } from '@/app/dashboard/actions';
 
@@ -119,24 +120,72 @@ function VaccineGroup({
       </div>
       <ul className="mt-2 space-y-1.5">
         {doses.map((v, i) => (
-          <li key={v.id} className="flex items-center gap-2 text-xs">
-            <span
-              className={`h-2 w-2 shrink-0 rounded-full ${
-                i === 0 ? 'bg-brand-green' : 'bg-white/20'
-              }`}
-            />
-            <span className="min-w-0 flex-1 text-brand-muted">
-              {fmtDate(v.given_on)}
-              {v.clinic ? ` · ${v.clinic}` : ''}
-              {v.next_due_on ? ` · ถัดไป ${fmtDate(v.next_due_on)}` : ''}
-            </span>
-            <form action={deleteVaccination}>
-              <input type="hidden" name="dogId" value={dogId} />
-              <input type="hidden" name="vaccId" value={v.id} />
-              <button type="submit" className="text-brand-muted hover:text-red-300">
-                ลบ
-              </button>
-            </form>
+          <li key={v.id} className="text-xs">
+            <div className="flex items-center gap-2">
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  i === 0 ? 'bg-brand-green' : 'bg-white/20'
+                }`}
+              />
+              <span className="min-w-0 flex-1 text-brand-muted">
+                {fmtDate(v.given_on)}
+                {v.clinic ? ` · ${v.clinic}` : ''}
+                {v.next_due_on ? ` · ถัดไป ${fmtDate(v.next_due_on)}` : ''}
+              </span>
+              <details>
+                <summary className="cursor-pointer list-none text-brand-gold [&::-webkit-details-marker]:hidden">
+                  แก้ไข
+                </summary>
+                <form
+                  action={updateVaccination}
+                  className="mt-2 space-y-2 rounded-lg border border-white/5 bg-brand-bgSoft p-2"
+                >
+                  <input type="hidden" name="dogId" value={dogId} />
+                  <input type="hidden" name="vaccId" value={v.id} />
+                  <input
+                    name="name"
+                    required
+                    defaultValue={v.name}
+                    className="input"
+                    placeholder="ชื่อวัคซีน"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="label">วันที่ฉีด</label>
+                      <input
+                        type="date"
+                        name="given_on"
+                        defaultValue={v.given_on ?? ''}
+                        className="input"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">เข็มถัดไป</label>
+                      <input
+                        type="date"
+                        name="next_due_on"
+                        defaultValue={v.next_due_on ?? ''}
+                        className="input"
+                      />
+                    </div>
+                  </div>
+                  <input
+                    name="clinic"
+                    defaultValue={v.clinic ?? ''}
+                    className="input"
+                    placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)"
+                  />
+                  <SubmitButton>บันทึกการแก้ไข</SubmitButton>
+                </form>
+              </details>
+              <form action={deleteVaccination}>
+                <input type="hidden" name="dogId" value={dogId} />
+                <input type="hidden" name="vaccId" value={v.id} />
+                <button type="submit" className="text-brand-muted hover:text-red-300">
+                  ลบ
+                </button>
+              </form>
+            </div>
           </li>
         ))}
       </ul>
