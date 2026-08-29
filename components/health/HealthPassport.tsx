@@ -53,6 +53,59 @@ function nextDueVaccine(list: Vaccination[]): { v: Vaccination; days: number } |
   return withDays.sort((a, b) => b.days - a.days)[0];
 }
 
+/** Every vaccine whose next dose is due within `within` days (incl. overdue). */
+function dueSoonVaccines(
+  list: Vaccination[],
+  within = 31,
+): { v: Vaccination; days: number }[] {
+  return list
+    .filter((v) => v.next_due_on)
+    .map((v) => ({ v, days: daysUntil(v.next_due_on)! }))
+    .filter((x) => x.days != null && x.days < within)
+    .sort((a, b) => a.days - b.days);
+}
+
+/** One "เข็มถัดไป" reminder row for a vaccine that is due soon / overdue. */
+function VaccineDueRow({ v, days }: { v: Vaccination; days: number }) {
+  const overdue = days < 0;
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-brand-bg/50 px-3.5 py-3">
+      <div
+        className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] ${
+          overdue ? 'bg-red-500/15' : 'bg-brand-gold/15'
+        }`}
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={overdue ? '#f0a0a0' : '#ffcb05'}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13px] font-medium text-brand-cream">เข็มถัดไป · {v.name}</div>
+        <div className="text-xs text-brand-muted">ครบกำหนด {fmtDate(v.next_due_on)}</div>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${
+          overdue ? 'bg-red-500/15 text-[#f0a0a0]' : 'bg-brand-gold/15 text-brand-gold'
+        }`}
+      >
+        {days === 0 ? 'วันนี้' : overdue ? `เลย ${Math.abs(days)} วัน` : `อีก ${days} วัน`}
+      </span>
+    </div>
+  );
+}
+
 function Measure({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="rounded-2xl bg-brand-card px-2 py-3.5 text-center text-brand-ink">
@@ -106,6 +159,7 @@ export default function HealthPassport({
     dog.chest_cm != null || dog.neck_cm != null || dog.muzzle_cm != null;
   const latestVacc = vaccinations[0] ?? null;
   const nextDue = nextDueVaccine(vaccinations);
+  const dueSoon = dueSoonVaccines(vaccinations, 31);
 
   return (
     <section className="overflow-hidden rounded-card border border-white/5 bg-brand-bgSoft">
@@ -206,85 +260,46 @@ export default function HealthPassport({
         <div>
           <div className="mb-3 text-[15px] font-semibold text-brand-cream">สุขภาพ</div>
           <div className="space-y-2.5">
-            {/* next-appointment reminder: the nearest upcoming due date */}
-            {(() => {
-              const overdue = nextDue != null && nextDue.days < 0;
-              const iconBg = nextDue
-                ? overdue
-                  ? 'bg-red-500/15'
-                  : 'bg-brand-gold/15'
-                : 'bg-brand-green/15';
-              const iconStroke = nextDue ? (overdue ? '#f0a0a0' : '#ffcb05') : '#7ab648';
-              return (
-                <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-brand-bg/50 px-3.5 py-3">
-                  <div
-                    className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] ${iconBg}`}
-                  >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke={iconStroke}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      {nextDue ? (
-                        <>
-                          <rect x="3" y="4" width="18" height="18" rx="2" />
-                          <line x1="16" y1="2" x2="16" y2="6" />
-                          <line x1="8" y1="2" x2="8" y2="6" />
-                          <line x1="3" y1="10" x2="21" y2="10" />
-                        </>
-                      ) : (
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
-                      )}
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    {nextDue ? (
-                      <>
-                        <div className="text-[13px] font-medium text-brand-cream">
-                          เข็มถัดไป · {nextDue.v.name}
-                        </div>
-                        <div className="text-xs text-brand-muted">
-                          ครบกำหนด {fmtDate(nextDue.v.next_due_on)}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-[13px] font-medium text-brand-cream">
-                          {latestVacc ? latestVacc.name : 'วัคซีน'}
-                        </div>
-                        <div className="text-xs text-brand-muted">
-                          {latestVacc
-                            ? `ฉีดล่าสุด ${fmtDate(latestVacc.given_on)}`
-                            : 'ยังไม่มีประวัติวัคซีน'}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {nextDue && (
-                    <span
-                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${
-                        overdue
-                          ? 'bg-red-500/15 text-[#f0a0a0]'
-                          : nextDue.days <= 30
-                            ? 'bg-brand-gold/15 text-brand-gold'
-                            : 'text-brand-muted'
-                      }`}
-                    >
-                      {nextDue.days === 0
-                        ? 'วันนี้'
-                        : overdue
-                          ? `เลย ${Math.abs(nextDue.days)} วัน`
-                          : `อีก ${nextDue.days} วัน`}
-                    </span>
-                  )}
+            {/* vaccines due within 31 days (incl. overdue) — show them all */}
+            {dueSoon.length > 0 ? (
+              dueSoon.map((x) => <VaccineDueRow key={x.v.id} v={x.v} days={x.days} />)
+            ) : nextDue ? (
+              // nothing due this month — show the next one as a calm info row
+              <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-brand-bg/50 px-3.5 py-3">
+                <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-brand-green/15">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7ab648" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
                 </div>
-              );
-            })()}
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-medium text-brand-cream">
+                    วัคซีนครบถ้วน ✓
+                  </div>
+                  <div className="text-xs text-brand-muted">
+                    เข็มถัดไป {nextDue.v.name} · {fmtDate(nextDue.v.next_due_on)}
+                  </div>
+                </div>
+                <span className="shrink-0 text-xs text-brand-muted">อีก {nextDue.days} วัน</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-brand-bg/50 px-3.5 py-3">
+                <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-brand-green/15">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7ab648" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-medium text-brand-cream">
+                    {latestVacc ? latestVacc.name : 'วัคซีน'}
+                  </div>
+                  <div className="text-xs text-brand-muted">
+                    {latestVacc
+                      ? `ฉีดล่าสุด ${fmtDate(latestVacc.given_on)}`
+                      : 'ยังไม่มีประวัติวัคซีน'}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* allergies */}
             <div className="flex gap-2.5">
