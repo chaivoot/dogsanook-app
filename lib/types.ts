@@ -52,6 +52,8 @@ export interface Dog {
   current_food_grams: number | null;
   current_food_kcal_per_100g: number | null;
   current_food_meals: number | null;
+  treat_kcal: number | null;
+  treat_note: string | null;
 }
 
 export interface WeightLog {

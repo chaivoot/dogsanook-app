@@ -313,6 +313,8 @@ export async function saveCurrentFood(formData: FormData) {
       current_food_grams: num(formData, 'current_food_grams'),
       current_food_kcal_per_100g: num(formData, 'current_food_kcal_per_100g'),
       current_food_meals: meals == null ? null : Math.round(meals),
+      treat_kcal: num(formData, 'treat_kcal'),
+      treat_note: opt(formData, 'treat_note'),
     })
     .eq('id', dogId);
 

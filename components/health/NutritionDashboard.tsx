@@ -174,10 +174,16 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
 }
 
 function CurrentFoodCard({ dog, der }: { dog: Dog; der: number | null }) {
-  const intake = intakeKcal(dog.current_food_grams, dog.current_food_kcal_per_100g);
-  const status = feedingStatus(intake, der);
+  const foodIntake = intakeKcal(dog.current_food_grams, dog.current_food_kcal_per_100g);
+  const treat = dog.treat_kcal != null ? Number(dog.treat_kcal) : null;
+  const total =
+    foodIntake != null || treat != null ? (foodIntake ?? 0) + (treat ?? 0) : null;
+  const status = feedingStatus(total, der);
+  // "treats ≤ 10% of daily calories" guideline — key for a training brand.
+  const treatPct = treat != null && der ? Math.round((treat / der) * 100) : null;
+  const treatOverLimit = treatPct != null && treatPct > 10;
   const hasFood =
-    dog.current_food != null || dog.current_food_grams != null;
+    dog.current_food != null || dog.current_food_grams != null || treat != null;
 
   const toneCls =
     status?.tone === 'ok'
@@ -197,24 +203,50 @@ function CurrentFoodCard({ dog, der }: { dog: Dog; der: number | null }) {
 
       {hasFood ? (
         <div className="space-y-3">
-          <div className="rounded-2xl border border-white/5 bg-brand-bg/50 px-4 py-3">
-            <div className="text-sm font-medium text-brand-cream">
-              {dog.current_food || 'อาหารที่ให้อยู่'}
+          {(dog.current_food != null || dog.current_food_grams != null) && (
+            <div className="rounded-2xl border border-white/5 bg-brand-bg/50 px-4 py-3">
+              <div className="text-sm font-medium text-brand-cream">
+                {dog.current_food || 'อาหารมื้อหลัก'}
+              </div>
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-brand-muted">
+                {dog.current_food_grams != null && <span>{dog.current_food_grams} ก./วัน</span>}
+                {dog.current_food_meals != null && <span>{dog.current_food_meals} มื้อ/วัน</span>}
+                {dog.current_food_kcal_per_100g != null && (
+                  <span>{dog.current_food_kcal_per_100g} kcal/100ก.</span>
+                )}
+                {foodIntake != null && (
+                  <span className="text-brand-cream">≈ {foodIntake} kcal</span>
+                )}
+              </div>
             </div>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-brand-muted">
-              {dog.current_food_grams != null && <span>{dog.current_food_grams} ก./วัน</span>}
-              {dog.current_food_meals != null && <span>{dog.current_food_meals} มื้อ/วัน</span>}
-              {dog.current_food_kcal_per_100g != null && (
-                <span>{dog.current_food_kcal_per_100g} kcal/100ก.</span>
+          )}
+
+          {treat != null && (
+            <div className="rounded-2xl border border-white/5 bg-brand-bg/50 px-4 py-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-medium text-brand-cream">
+                  ขนมฝึก {dog.treat_note ? `· ${dog.treat_note}` : ''}
+                </span>
+                <span className="text-xs text-brand-cream">≈ {treat} kcal</span>
+              </div>
+              {treatPct != null && (
+                <div
+                  className={`mt-1 text-xs ${
+                    treatOverLimit ? 'text-[#f0a0a0]' : 'text-brand-muted'
+                  }`}
+                >
+                  {treatPct}% ของพลังงานต่อวัน
+                  {treatOverLimit ? ' · เกิน 10% ที่แนะนำ ควรลดขนม' : ' · อยู่ในเกณฑ์ ≤10%'}
+                </div>
               )}
             </div>
-          </div>
+          )}
 
-          {intake != null && der != null && status ? (
+          {total != null && der != null && status ? (
             <div className="rounded-2xl border border-white/5 bg-brand-bg/50 px-4 py-3">
               <div className="flex items-baseline justify-between text-sm">
-                <span className="text-brand-muted">ได้รับจริง</span>
-                <span className="font-semibold text-brand-cream">≈ {intake} kcal/วัน</span>
+                <span className="text-brand-muted">ได้รับจริงรวม (อาหาร+ขนม)</span>
+                <span className="font-semibold text-brand-cream">≈ {total} kcal/วัน</span>
               </div>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#3a2f27]">
                 <div
@@ -236,7 +268,7 @@ function CurrentFoodCard({ dog, der }: { dog: Dog; der: number | null }) {
             </div>
           ) : (
             <p className="text-xs text-brand-muted">
-              ใส่ปริมาณ (กรัม/วัน) และ kcal/100ก. เพื่อเทียบกับ DER
+              ใส่ปริมาณอาหาร (กรัม/วัน + kcal/100ก.) และ/หรือขนมฝึก เพื่อเทียบกับ DER
             </p>
           )}
         </div>
@@ -300,6 +332,37 @@ function CurrentFoodCard({ dog, der }: { dog: Dog; der: number | null }) {
           <p className="text-[11px] text-brand-muted">
             kcal/100ก. ดูได้จากถุงอาหาร (Metabolizable Energy) — ใส่เพื่อเทียบกับ DER
           </p>
+
+          <div className="border-t border-white/10 pt-3">
+            <div className="mb-1 text-sm font-medium text-brand-cream">ขนมฝึก (ต่อวัน)</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="label">ขนมอะไร</label>
+                <input
+                  name="treat_note"
+                  defaultValue={dog.treat_note ?? ''}
+                  className="input"
+                  placeholder="เช่น ตับอบแห้ง, ไก่ฉีก"
+                />
+              </div>
+              <div>
+                <label className="label">kcal/วัน (ประมาณ)</label>
+                <input
+                  name="treat_kcal"
+                  type="number"
+                  step="1"
+                  min="0"
+                  defaultValue={dog.treat_kcal ?? ''}
+                  className="input"
+                  placeholder="เช่น 60"
+                />
+              </div>
+            </div>
+            <p className="mt-1 text-[11px] text-brand-muted">
+              ขนมช่วงฝึกก็มีแคลอรี — ควรไม่เกิน 10% ของพลังงานต่อวัน (DER)
+            </p>
+          </div>
+
           <SubmitButton pendingText="กำลังบันทึก…">บันทึกอาหาร</SubmitButton>
         </form>
       </details>
