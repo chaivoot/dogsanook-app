@@ -255,6 +255,18 @@ function ManageDog({
             <SubmitButton pendingText="กำลังสร้าง…">สร้างลิงก์แนะนำเพื่อน</SubmitButton>
           </form>
         )}
+
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm text-brand-gold">
+            อ่านเงื่อนไข
+          </summary>
+          <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-brand-muted">
+            <li>• ส่วนแบ่ง <span className="text-brand-cream">10% แบบ flat rate</span> — ไม่มีขั้นบันได</li>
+            <li>• คิดเฉพาะ <span className="text-brand-cream">การซื้อครั้งแรก</span> ของเพื่อนที่คุณแนะนำเท่านั้น</li>
+            <li>• โอนส่วนแบ่งเมื่อ <span className="text-brand-cream">การซื้อขายเสร็จสมบูรณ์</span> (ชำระครบ ไม่มีการคืนเงิน)</li>
+            <li>• ทางหมาสนุกขอสงวนสิทธิ์ในการเปลี่ยนแปลงเงื่อนไข</li>
+          </ul>
+        </details>
       </section>
 
       {/* co-owners (many-to-many) */}
