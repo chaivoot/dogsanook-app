@@ -41,8 +41,8 @@ export default function FoodRecommendation({ dog }: { dog: Dog }) {
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="M12 2s4 3 4 8a4 4 0 0 1-8 0c0-5 4-8 4-8z" />
-            <path d="M8 14v6M16 14v6" />
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z" />
+            <path d="M2 21c0-3 1.85-5.36 5.08-6" />
           </svg>
         </div>
         <div className="min-w-0 flex-1">
