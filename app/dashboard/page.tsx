@@ -261,8 +261,9 @@ function ManageDog({
             อ่านเงื่อนไข
           </summary>
           <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-brand-muted">
-            <li>• ส่วนแบ่ง <span className="text-brand-cream">10% แบบ flat rate</span> — ไม่มีขั้นบันได</li>
-            <li>• คิดเฉพาะ <span className="text-brand-cream">การซื้อครั้งแรก</span> ของเพื่อนที่คุณแนะนำเท่านั้น</li>
+            <li>• ค่าเรียนฝึกหมา — ส่วนแบ่ง <span className="text-brand-cream">10%</span></li>
+            <li>• Pet Nutrition Coach — ส่วนแบ่ง <span className="text-brand-cream">7%</span></li>
+            <li>• เป็น flat rate ไม่มีขั้นบันได</li>
             <li>• โอนส่วนแบ่งเมื่อ <span className="text-brand-cream">การซื้อขายเสร็จสมบูรณ์</span> (ชำระครบ ไม่มีการคืนเงิน)</li>
             <li>• ทางหมาสนุกขอสงวนสิทธิ์ในการเปลี่ยนแปลงเงื่อนไข</li>
           </ul>
