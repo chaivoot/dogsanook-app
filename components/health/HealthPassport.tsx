@@ -144,72 +144,91 @@ function VaccineGroup({
         <summary className="cursor-pointer text-xs text-brand-gold">
           ฉีดเพิ่ม (บันทึกเข็มใหม่)
         </summary>
-        <ResetForm action={addVaccination} className="mt-2 space-y-2">
-          <input type="hidden" name="dogId" value={dogId} />
-          <input type="hidden" name="name" value={name} />
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="label">วันที่ฉีด</label>
-              <input type="date" name="given_on" defaultValue={isoToday()} className="input" />
-            </div>
-            <div>
-              <label className="label">เข็มถัดไป</label>
-              <input
-                type="date"
-                name="next_due_on"
-                defaultValue={isoPlusYear()}
-                className="input"
-              />
-            </div>
-          </div>
-          <input name="clinic" className="input" placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)" />
-          <p className="text-[11px] text-brand-muted">
-            ปกติกระตุ้นทุก 1 ปี — ปรับวันได้ตามที่สัตวแพทย์แนะนำ
-          </p>
-          <SubmitButton>บันทึกเข็มใหม่</SubmitButton>
-        </ResetForm>
+        <RecordDoseForm dogId={dogId} name={name} />
       </details>
     </div>
   );
 }
 
-/** One "เข็มถัดไป" reminder row for a vaccine that is due soon / overdue. */
-function VaccineDueRow({ v, days }: { v: Vaccination; days: number }) {
+/** Pre-filled "record a new dose" form (vaccine name locked, 1-year default). */
+function RecordDoseForm({ dogId, name }: { dogId: string; name: string }) {
+  return (
+    <ResetForm action={addVaccination} className="mt-2 space-y-2">
+      <input type="hidden" name="dogId" value={dogId} />
+      <input type="hidden" name="name" value={name} />
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="label">วันที่ฉีด</label>
+          <input type="date" name="given_on" defaultValue={isoToday()} className="input" />
+        </div>
+        <div>
+          <label className="label">เข็มถัดไป</label>
+          <input type="date" name="next_due_on" defaultValue={isoPlusYear()} className="input" />
+        </div>
+      </div>
+      <input name="clinic" className="input" placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)" />
+      <p className="text-[11px] text-brand-muted">
+        ปกติกระตุ้นทุก 1 ปี — ปรับวันได้ตามที่สัตวแพทย์แนะนำ
+      </p>
+      <SubmitButton>บันทึกเข็มใหม่</SubmitButton>
+    </ResetForm>
+  );
+}
+
+/** One "เข็มถัดไป" reminder row for a vaccine that is due soon / overdue.
+ *  Tapping "✓ ฉีดแล้ว" logs the new dose right here — no scrolling. */
+function VaccineDueRow({
+  v,
+  days,
+  dogId,
+}: {
+  v: Vaccination;
+  days: number;
+  dogId: string;
+}) {
   const overdue = days < 0;
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-brand-bg/50 px-3.5 py-3">
-      <div
-        className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] ${
-          overdue ? 'bg-red-500/15' : 'bg-brand-gold/15'
-        }`}
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke={overdue ? '#f0a0a0' : '#ffcb05'}
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <div className="overflow-hidden rounded-2xl border border-white/5 bg-brand-bg/50">
+      <div className="flex items-center gap-3 px-3.5 py-3">
+        <div
+          className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] ${
+            overdue ? 'bg-red-500/15' : 'bg-brand-gold/15'
+          }`}
         >
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <line x1="16" y1="2" x2="16" y2="6" />
-          <line x1="8" y1="2" x2="8" y2="6" />
-          <line x1="3" y1="10" x2="21" y2="10" />
-        </svg>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={overdue ? '#f0a0a0' : '#ffcb05'}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] font-medium text-brand-cream">เข็มถัดไป · {v.name}</div>
+          <div className="text-xs text-brand-muted">ครบกำหนด {fmtDate(v.next_due_on)}</div>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${
+            overdue ? 'bg-red-500/15 text-[#f0a0a0]' : 'bg-brand-gold/15 text-brand-gold'
+          }`}
+        >
+          {days === 0 ? 'วันนี้' : overdue ? `เลย ${Math.abs(days)} วัน` : `อีก ${days} วัน`}
+        </span>
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium text-brand-cream">เข็มถัดไป · {v.name}</div>
-        <div className="text-xs text-brand-muted">ครบกำหนด {fmtDate(v.next_due_on)}</div>
-      </div>
-      <span
-        className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${
-          overdue ? 'bg-red-500/15 text-[#f0a0a0]' : 'bg-brand-gold/15 text-brand-gold'
-        }`}
-      >
-        {days === 0 ? 'วันนี้' : overdue ? `เลย ${Math.abs(days)} วัน` : `อีก ${days} วัน`}
-      </span>
+      <details className="border-t border-white/5 px-3.5 py-2">
+        <summary className="cursor-pointer text-xs font-medium text-brand-gold">
+          ✓ ฉีดแล้ว · บันทึกเข็มใหม่
+        </summary>
+        <RecordDoseForm dogId={dogId} name={v.name} />
+      </details>
     </div>
   );
 }
@@ -374,7 +393,9 @@ export default function HealthPassport({
           <div className="space-y-2.5">
             {/* vaccines due within 31 days (incl. overdue) — show them all */}
             {dueSoon.length > 0 ? (
-              dueSoon.map((x) => <VaccineDueRow key={x.v.id} v={x.v} days={x.days} />)
+              dueSoon.map((x) => (
+                <VaccineDueRow key={x.v.id} v={x.v} days={x.days} dogId={dog.id} />
+              ))
             ) : nextDue ? (
               // nothing due this month — show the next one as a calm info row
               <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-brand-bg/50 px-3.5 py-3">
