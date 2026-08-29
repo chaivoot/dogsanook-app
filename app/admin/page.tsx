@@ -46,7 +46,6 @@ export default async function AdminPage({
     getAllDogs(),
   ]);
   const owners = profiles.filter((p) => p.status !== 'blocked');
-  const pendingCount = profiles.filter((p) => p.status === 'pending').length;
 
   return (
     <div className="min-h-dvh">
@@ -63,7 +62,7 @@ export default async function AdminPage({
 
         {/* Tabs */}
         <nav className="mb-6 flex flex-wrap gap-2">
-          <TabLink tab="users" current={tab} label="ผู้ใช้" badge={pendingCount} />
+          <TabLink tab="users" current={tab} label="ผู้ใช้" />
           <TabLink tab="dogs" current={tab} label="น้องหมา" />
           <TabLink tab="guides" current={tab} label="คู่มือ" />
           <TabLink tab="vouchers" current={tab} label="Voucher" />

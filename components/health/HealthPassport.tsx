@@ -187,17 +187,19 @@ function VaccineDueRow({
   dogId: string;
 }) {
   const overdue = days < 0;
+  const countdown =
+    days === 0 ? 'วันนี้' : overdue ? `เลย ${Math.abs(days)} วัน` : `อีก ${days} วัน`;
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/5 bg-brand-bg/50">
-      <div className="flex items-center gap-3 px-3.5 py-3">
+    <details className="overflow-hidden rounded-2xl border border-white/5 bg-brand-bg/50">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         <div
-          className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] ${
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
             overdue ? 'bg-red-500/15' : 'bg-brand-gold/15'
           }`}
         >
           <svg
-            width="18"
-            height="18"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke={overdue ? '#f0a0a0' : '#ffcb05'}
@@ -212,24 +214,20 @@ function VaccineDueRow({
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-medium text-brand-cream">เข็มถัดไป · {v.name}</div>
-          <div className="text-xs text-brand-muted">ครบกำหนด {fmtDate(v.next_due_on)}</div>
+          <div className="truncate text-[13px] font-medium text-brand-cream">{v.name}</div>
+          <div className="truncate text-[11px] text-brand-muted">
+            {fmtDate(v.next_due_on)} ·{' '}
+            <span className={overdue ? 'text-[#f0a0a0]' : 'text-brand-gold'}>{countdown}</span>
+          </div>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${
-            overdue ? 'bg-red-500/15 text-[#f0a0a0]' : 'bg-brand-gold/15 text-brand-gold'
-          }`}
-        >
-          {days === 0 ? 'วันนี้' : overdue ? `เลย ${Math.abs(days)} วัน` : `อีก ${days} วัน`}
+        <span className="shrink-0 rounded-full bg-brand-gold px-3 py-1.5 text-xs font-semibold text-brand-ink">
+          ฉีดแล้ว
         </span>
-      </div>
-      <details className="border-t border-white/5 px-3.5 py-2">
-        <summary className="cursor-pointer text-xs font-medium text-brand-gold">
-          ✓ ฉีดแล้ว · บันทึกเข็มใหม่
-        </summary>
+      </summary>
+      <div className="border-t border-white/5 px-3 py-2.5">
         <RecordDoseForm dogId={dogId} name={v.name} />
-      </details>
-    </div>
+      </div>
+    </details>
   );
 }
 

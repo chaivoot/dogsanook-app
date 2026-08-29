@@ -68,13 +68,13 @@ export default function UserRow({
             </button>
           </form>
 
-          {/* Approve / block */}
-          {profile.status !== 'allowed' ? (
+          {/* Block / unblock (signups are auto-approved, so no approval step) */}
+          {profile.status === 'blocked' ? (
             <form action={setUserStatus}>
               <input type="hidden" name="profileId" value={profile.id} />
               <input type="hidden" name="status" value="allowed" />
-              <button type="submit" className="btn-gold px-4 py-2 text-sm">
-                อนุมัติ
+              <button type="submit" className="btn-ghost">
+                ปลดระงับ
               </button>
             </form>
           ) : (
