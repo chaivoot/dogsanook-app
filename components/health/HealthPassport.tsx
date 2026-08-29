@@ -471,6 +471,36 @@ export default function HealthPassport({
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">น้ำหนักเป้าหมาย (กก.)</label>
+                <input
+                  name="target_weight_kg"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  defaultValue={dog.target_weight_kg ?? ''}
+                  className="input"
+                  placeholder="เช่น 7"
+                />
+              </div>
+              <div>
+                <label className="label">BCS · ความสมบูรณ์ (1–9)</label>
+                <select name="bcs" defaultValue={dog.bcs ?? ''} className="input">
+                  <option value="">— ไม่ระบุ —</option>
+                  <option value="1">1 · ผอมมาก</option>
+                  <option value="2">2</option>
+                  <option value="3">3 · ผอม</option>
+                  <option value="4">4</option>
+                  <option value="5">5 · สมส่วน (พอดี)</option>
+                  <option value="6">6</option>
+                  <option value="7">7 · ท้วม</option>
+                  <option value="8">8</option>
+                  <option value="9">9 · อ้วนมาก</option>
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="label">ขนาดตัว (ซม.) — รอบอก / รอบคอ / รอบปาก</label>
               <div className="grid grid-cols-3 gap-2">

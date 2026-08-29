@@ -279,6 +279,8 @@ export async function saveDogHealth(formData: FormData) {
       drug_allergies: opt(formData, 'drug_allergies'),
       microchip_no: opt(formData, 'microchip_no'),
       bma_reg_no: opt(formData, 'bma_reg_no'),
+      bcs: num(formData, 'bcs'),
+      target_weight_kg: num(formData, 'target_weight_kg'),
     })
     .eq('id', dogId);
 

@@ -46,6 +46,8 @@ export interface Dog {
   drug_allergies: string | null;
   microchip_no: string | null;
   bma_reg_no: string | null;
+  bcs: number | null;
+  target_weight_kg: number | null;
 }
 
 export interface WeightLog {

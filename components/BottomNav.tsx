@@ -1,42 +1,49 @@
 import Link from 'next/link';
 
-type Tab = 'health' | 'graph' | 'services' | 'dogs';
+type Tab = 'info' | 'nutrition' | 'training' | 'manage';
 
 const ICONS: Record<Tab, React.ReactNode> = {
-  health: (
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-  ),
-  graph: (
+  info: (
+    // health book / passport
     <>
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
     </>
   ),
-  services: (
+  nutrition: (
+    // food drop
     <>
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" />
+      <path d="M12 2s4 3 4 8a4 4 0 0 1-8 0c0-5 4-8 4-8z" />
+      <path d="M8 14v6M16 14v6" />
     </>
   ),
-  dogs: (
+  training: (
+    // target
     <>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="0.5" />
+    </>
+  ),
+  manage: (
+    // multiple owners
+    <>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </>
   ),
 };
 
 const LABELS: Record<Tab, string> = {
-  health: 'สุขภาพ',
-  graph: 'กราฟ',
-  services: 'บริการ',
-  dogs: 'น้อง',
+  info: 'น้องหมา',
+  nutrition: 'โภชนาการ',
+  training: 'การฝึก',
+  manage: 'จัดการ',
 };
 
-const ORDER: Tab[] = ['health', 'graph', 'services', 'dogs'];
+const ORDER: Tab[] = ['info', 'nutrition', 'training', 'manage'];
 
 /** Fixed mobile bottom nav, matching the mockup. Preserves the active dog. */
 export default function BottomNav({

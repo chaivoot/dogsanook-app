@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import type { Dog } from '@/lib/types';
+import { dogOwners } from '@/lib/types';
 import { requireProfile } from '@/lib/auth';
 import {
   getDogsForOwner,
+  getDogById,
   getDogProgress,
   getWeightLogs,
   getVaccinations,
@@ -10,7 +12,7 @@ import {
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
 import HealthPassport from '@/components/health/HealthPassport';
-import FoodRecommendation from '@/components/health/FoodRecommendation';
+import NutritionDashboard from '@/components/health/NutritionDashboard';
 import GraphDashboard from '@/components/health/GraphDashboard';
 import SubmitButton from '@/components/SubmitButton';
 import ProfilePhotoUploader from '@/components/ProfilePhotoUploader';
@@ -22,8 +24,8 @@ import PhotoGallery from '@/components/games/PhotoGallery';
 import DeleteDogButton from '@/components/DeleteDogButton';
 import { addDog, updateDog, setMediaConsent } from './actions';
 
-type Tab = 'health' | 'graph' | 'services' | 'dogs';
-const TABS: Tab[] = ['health', 'graph', 'services', 'dogs'];
+type Tab = 'info' | 'nutrition' | 'training' | 'manage';
+const TABS: Tab[] = ['info', 'nutrition', 'training', 'manage'];
 
 export default async function DashboardPage({
   searchParams,
@@ -35,7 +37,7 @@ export default async function DashboardPage({
   const activeDog = dogs.find((d) => d.id === searchParams.dog) ?? dogs[0] ?? null;
   const tab: Tab = TABS.includes(searchParams.tab as Tab)
     ? (searchParams.tab as Tab)
-    : 'health';
+    : 'info';
 
   return (
     <div className="min-h-dvh pb-24">
@@ -105,19 +107,23 @@ async function TabContent({
   dog: Dog;
   ownerId: string;
 }) {
+  if (tab === 'nutrition') {
+    return <NutritionDashboard dog={dog} />;
+  }
+
+  if (tab === 'manage') {
+    const withOwners = await getDogById(dog.id);
+    const owners = withOwners ? dogOwners(withOwners) : [];
+    return <ManageDog dog={dog} owners={owners} />;
+  }
+
   const [{ lessons, photos }, weightLogs, vaccinations] = await Promise.all([
     getDogProgress(dog.id),
     getWeightLogs(dog.id),
     getVaccinations(dog.id),
   ]);
 
-  if (tab === 'graph') {
-    return (
-      <GraphDashboard dog={dog} weightLogs={weightLogs} vaccinations={vaccinations} />
-    );
-  }
-
-  if (tab === 'services') {
+  if (tab === 'training') {
     const lessonList = lessons.map((l) => l.lesson);
     const photosByLesson = new Map<number, typeof photos>();
     const otherPhotos: typeof photos = [];
@@ -132,9 +138,7 @@ async function TabContent({
 
     return (
       <div className="space-y-6">
-        <h1 className="text-xl font-bold text-brand-cream">บริการของ{dog.name}</h1>
-
-        <ServicesList dogName={dog.name} />
+        <h1 className="text-xl font-bold text-brand-cream">การฝึกของ{dog.name}</h1>
 
         <ProgressSummary lessons={lessons} />
 
@@ -170,56 +174,55 @@ async function TabContent({
     );
   }
 
-  if (tab === 'dogs') {
-    return <ManageDog dog={dog} />;
-  }
-
-  // default: health
+  // default: info (health passport + change tracking)
   return (
     <div className="space-y-6">
       <HealthPassport dog={dog} weightLogs={weightLogs} vaccinations={vaccinations} />
-      <FoodRecommendation dog={dog} />
+      <GraphDashboard dog={dog} weightLogs={weightLogs} vaccinations={vaccinations} />
       <MediaConsentCard dog={dog} />
     </div>
   );
 }
 
-function ServicesList({ dogName }: { dogName: string }) {
-  return (
-    <section className="space-y-3">
-      <div className="rounded-card border border-brand-teal/30 bg-brand-teal/[.08] p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-teal/20">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4fd1c5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2s4 3 4 8a4 4 0 0 1-8 0c0-5 4-8 4-8z" />
-              <path d="M8 14v6M16 14v6" />
-            </svg>
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-brand-cream">อาหารสุขภาพ</div>
-            <div className="text-xs text-brand-muted">dogevityfood · จัดสูตรตาม DER</div>
-          </div>
-          <a
-            href="https://dogevityfood.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 rounded-full bg-brand-teal px-4 py-2 text-xs font-semibold text-white"
-          >
-            เปิด
-          </a>
-        </div>
-      </div>
-      <p className="px-1 text-xs text-brand-muted">
-        บริการอื่นๆ (กรูมมิ่ง · โรงพยาบาลสัตว์ · รับฝากเลี้ยง) กำลังจะเปิดให้เลือกเร็วๆ นี้
-      </p>
-    </section>
-  );
-}
-
-function ManageDog({ dog }: { dog: Dog }) {
+function ManageDog({
+  dog,
+  owners,
+}: {
+  dog: Dog;
+  owners: { id: string; display_name: string | null }[];
+}) {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-brand-cream">จัดการ{dog.name}</h1>
+
+      {/* co-owners (many-to-many) */}
+      <section className="dark-card">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-brand-cream">
+            เจ้าของน้อง ({owners.length})
+          </span>
+        </div>
+        <ul className="mt-3 space-y-2">
+          {owners.map((o) => (
+            <li
+              key={o.id}
+              className="flex items-center gap-3 rounded-xl border border-white/5 bg-brand-bg/50 px-3 py-2.5"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-teal/20 text-xs text-brand-teal">
+                {(o.display_name ?? '?').slice(0, 1)}
+              </span>
+              <span className="text-sm text-brand-cream">
+                {o.display_name ?? 'ผู้ใช้'}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-3 rounded-xl border border-dashed border-white/10 px-3 py-3 text-center">
+          <p className="text-xs text-brand-muted">
+            เชิญเจ้าของร่วมด้วย QR / ลิงก์ — กำลังจะมาเร็วๆ นี้
+          </p>
+        </div>
+      </section>
 
       {dog.notes && (
         <p className="rounded-card border border-white/5 bg-brand-bgSoft px-4 py-3 text-sm text-brand-muted">

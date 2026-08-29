@@ -39,6 +39,15 @@ export function restingEnergy(weightKg: number | null | undefined): number | nul
   return 70 * Math.pow(weightKg, 0.75);
 }
 
+/** The DER multiplier applied to RER for the given activity / neuter state. */
+export function activityFactor(
+  opts: { activity?: ActivityLevel | null; neutered?: boolean | null } = {},
+): number {
+  if (opts.activity) return ACTIVITY_FACTOR[opts.activity];
+  if (opts.neutered === false) return 1.8; // intact adult
+  return ACTIVITY_FACTOR.normal; // 1.6, neutered/unknown adult
+}
+
 /**
  * DER in kcal/day. When `neutered` is known and no explicit activity level is
  * given, an intact adult gets a slightly higher factor (1.8 vs 1.6).
@@ -49,17 +58,18 @@ export function dailyEnergy(
 ): number | null {
   const rer = restingEnergy(weightKg);
   if (rer == null) return null;
+  return Math.round(rer * activityFactor(opts));
+}
 
-  let factor: number;
-  if (opts.activity) {
-    factor = ACTIVITY_FACTOR[opts.activity];
-  } else if (opts.neutered === false) {
-    factor = 1.8; // intact adult
-  } else {
-    factor = ACTIVITY_FACTOR.normal; // 1.6, neutered/unknown adult
-  }
-
-  return Math.round(rer * factor);
+/** Body Condition Score (1–9) → Thai label + tone for colouring. */
+export function bcsStatus(
+  bcs: number | null | undefined,
+): { label: string; tone: 'low' | 'ideal' | 'high' } | null {
+  if (bcs == null || !Number.isFinite(bcs)) return null;
+  if (bcs <= 3) return { label: 'ผอมไป', tone: 'low' };
+  if (bcs <= 5) return { label: 'อุดมสมบูรณ์', tone: 'ideal' };
+  if (bcs <= 6) return { label: 'ท้วม', tone: 'high' };
+  return { label: 'อ้วนไป', tone: 'high' };
 }
 
 /** Age in whole months from a birthdate (ISO string or Date). */
