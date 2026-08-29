@@ -8,10 +8,15 @@ export default function FoodRecommendation({ dog }: { dog: Dog }) {
     activity: dog.activity_level,
     neutered: dog.neutered,
   });
-  const portion = foodPortion(der);
+
+  // Treats spend part of the daily budget, so the main meal is DER minus
+  // treats — keep total (food + treats) on DER, don't stack treats on top.
+  const treat = dog.treat_kcal != null ? Number(dog.treat_kcal) : 0;
+  const foodBudget = der != null ? Math.max(0, der - treat) : null;
+  const portion = foodPortion(foodBudget);
 
   // Nothing to recommend until we know the weight (→ DER → grams).
-  if (!portion || der == null) return null;
+  if (!portion || der == null || foodBudget == null) return null;
 
   const avoid = splitAllergies(dog.food_allergies);
 
@@ -42,7 +47,7 @@ export default function FoodRecommendation({ dog }: { dog: Dog }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-brand-cream">
-            แนะนำอาหารสำหรับ{dog.name}
+            แนะนำอาหารมื้อหลักสำหรับ{dog.name}
           </div>
           <div className="text-xs text-brand-muted">
             ≈ {portion.gramsMid} ก./วัน{' '}
@@ -80,7 +85,9 @@ export default function FoodRecommendation({ dog }: { dog: Dog }) {
       </div>
 
       <p className="mt-2 text-[11px] leading-relaxed text-brand-muted">
-        เป็นค่าประมาณจาก DER {der} kcal/วัน — ปริมาณจริงขึ้นกับพลังงานของอาหารแต่ละสูตร
+        {treat > 0
+          ? `คิดจากพลังงานมื้อหลัก ${foodBudget} kcal (DER ${der} − ขนม ${treat}) — ปริมาณจริงขึ้นกับ kcal ของอาหารแต่ละสูตร`
+          : `เป็นค่าประมาณจาก DER ${der} kcal/วัน — ปริมาณจริงขึ้นกับพลังงานของอาหารแต่ละสูตร`}
       </p>
     </section>
   );
