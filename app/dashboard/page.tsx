@@ -1,8 +1,14 @@
 import Link from 'next/link';
 import type { Dog } from '@/lib/types';
 import { requireProfile } from '@/lib/auth';
-import { getDogsForOwner, getDogProgress } from '@/lib/data';
+import {
+  getDogsForOwner,
+  getDogProgress,
+  getWeightLogs,
+  getVaccinations,
+} from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
+import HealthPassport from '@/components/health/HealthPassport';
 import SubmitButton from '@/components/SubmitButton';
 import ProfilePhotoUploader from '@/components/ProfilePhotoUploader';
 import DogAvatar from '@/components/DogAvatar';
@@ -16,7 +22,7 @@ import { addDog, updateDog, setMediaConsent } from './actions';
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { dog?: string; mc?: string };
+  searchParams: { dog?: string; mc?: string; health?: string };
 }) {
   const profile = await requireProfile();
   const dogs = await getDogsForOwner(profile.id);
@@ -42,6 +48,11 @@ export default async function DashboardPage({
         {searchParams.mc === 'auth' && (
           <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-200">
             ไม่มีสิทธิ์บันทึกการยินยอมสำหรับน้องตัวนี้
+          </p>
+        )}
+        {searchParams.health === 'ok' && (
+          <p className="mb-4 rounded-xl border border-brand-green/25 bg-brand-green/10 px-4 py-2.5 text-sm text-brand-green">
+            ✓ บันทึกข้อมูลสุขภาพเรียบร้อยแล้ว
           </p>
         )}
         {dogs.length === 0 ? (
@@ -86,6 +97,31 @@ export default async function DashboardPage({
               <label className="label">พันธุ์ (ไม่บังคับ)</label>
               <input name="breed" className="input" placeholder="เช่น Shetland Sheepdog" />
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">เพศ</label>
+                <select name="sex" defaultValue="" className="input">
+                  <option value="">— ไม่ระบุ —</option>
+                  <option value="male">ผู้</option>
+                  <option value="female">เมีย</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">วันเกิด</label>
+                <input type="date" name="birthdate" className="input" />
+              </div>
+            </div>
+            <div>
+              <label className="label">น้ำหนัก (กก.) — ไว้คำนวณ DER</label>
+              <input
+                name="weight_kg"
+                type="number"
+                step="0.1"
+                min="0"
+                className="input"
+                placeholder="เช่น 12.4"
+              />
+            </div>
             <div>
               <label className="label">รูปน้อง (ไม่บังคับ)</label>
               <input
@@ -110,7 +146,11 @@ async function DogSection({
   dog: Awaited<ReturnType<typeof getDogsForOwner>>[number];
   ownerId: string;
 }) {
-  const { lessons, photos } = await getDogProgress(dog.id);
+  const [{ lessons, photos }, weightLogs, vaccinations] = await Promise.all([
+    getDogProgress(dog.id),
+    getWeightLogs(dog.id),
+    getVaccinations(dog.id),
+  ]);
   const lessonList = lessons.map((l) => l.lesson);
 
   // Group media by game; keep uncategorized (no lesson) separate.
@@ -186,6 +226,12 @@ async function DogSection({
           </div>
         </details>
       </section>
+
+      <HealthPassport
+        dog={dog}
+        weightLogs={weightLogs}
+        vaccinations={vaccinations}
+      />
 
       <MediaConsentCard dog={dog} />
 

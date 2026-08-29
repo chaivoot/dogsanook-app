@@ -12,6 +12,15 @@ export interface Profile {
   created_at: string;
 }
 
+export type DogSex = 'male' | 'female';
+export type ActivityLevel =
+  | 'weight_loss'
+  | 'senior'
+  | 'normal'
+  | 'active'
+  | 'working'
+  | 'puppy';
+
 export interface Dog {
   id: string;
   name: string;
@@ -23,6 +32,40 @@ export interface Dog {
   media_consent: boolean;
   media_consent_at: string | null;
   media_consent_by: string | null;
+  // health passport (สมุดสุขภาพน้อง)
+  sex: DogSex | null;
+  birthdate: string | null;
+  neutered: boolean | null;
+  weight_kg: number | null;
+  height_cm: number | null;
+  chest_cm: number | null;
+  neck_cm: number | null;
+  muzzle_cm: number | null;
+  activity_level: ActivityLevel | null;
+  food_allergies: string | null;
+  drug_allergies: string | null;
+  microchip_no: string | null;
+  bma_reg_no: string | null;
+}
+
+export interface WeightLog {
+  id: string;
+  dog_id: string;
+  weight_kg: number;
+  measured_at: string;
+  logged_by: string | null;
+  created_at: string;
+}
+
+export interface Vaccination {
+  id: string;
+  dog_id: string;
+  name: string;
+  given_on: string | null;
+  next_due_on: string | null;
+  clinic: string | null;
+  logged_by: string | null;
+  created_at: string;
 }
 
 /** A dog together with all of its owners (a household can share a dog). */

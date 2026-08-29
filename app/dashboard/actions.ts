@@ -65,6 +65,20 @@ export async function undoCheckin(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
+/** Parse a form value as a positive number, or null when blank/invalid. */
+function num(formData: FormData, key: string): number | null {
+  const raw = String(formData.get(key) ?? '').trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+/** Parse a select whose blank/absent value means "leave unset". */
+function opt(formData: FormData, key: string): string | null {
+  const raw = String(formData.get(key) ?? '').trim();
+  return raw || null;
+}
+
 /** Owner adds a new dog to their own account (with an optional photo). */
 export async function addDog(formData: FormData) {
   const profile = await getCurrentProfile();
@@ -73,14 +87,34 @@ export async function addDog(formData: FormData) {
   const name = String(formData.get('name') ?? '').trim();
   if (!name) return;
   const breed = String(formData.get('breed') ?? '').trim() || null;
+  // Optional health basics captured at creation time.
+  const sex = opt(formData, 'sex');
+  const birthdate = opt(formData, 'birthdate');
+  const weight = num(formData, 'weight_kg');
 
   const admin = createServiceClient();
   const { data: created } = await admin
     .from('dogs')
-    .insert({ name, breed, owner_id: profile.id })
+    .insert({
+      name,
+      breed,
+      owner_id: profile.id,
+      sex: sex === 'male' || sex === 'female' ? sex : null,
+      birthdate,
+      weight_kg: weight,
+    })
     .select('id')
     .single();
   if (!created) return;
+
+  // Seed the weight history so the trend graph starts from day one.
+  if (weight != null) {
+    await admin.from('weight_logs').insert({
+      dog_id: created.id,
+      weight_kg: weight,
+      logged_by: profile.id,
+    });
+  }
 
   // Register the creator as an owner in the join table.
   await admin
@@ -206,6 +240,117 @@ export async function deleteDog(formData: FormData) {
 
   revalidatePath('/dashboard');
   redirect('/dashboard');
+}
+
+/** Owner edits the full health passport (measurements, allergies, ids, …).
+ *  Logs a weight-history point whenever the weight is set or changed. */
+export async function saveDogHealth(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const admin = createServiceClient();
+
+  // read prior weight so we only log a history point on an actual change
+  const { data: prev } = await admin
+    .from('dogs')
+    .select('weight_kg')
+    .eq('id', dogId)
+    .maybeSingle();
+
+  const sex = opt(formData, 'sex');
+  const neuteredRaw = opt(formData, 'neutered'); // 'yes' | 'no' | null
+  const activity = opt(formData, 'activity_level');
+  const weight = num(formData, 'weight_kg');
+
+  await admin
+    .from('dogs')
+    .update({
+      sex: sex === 'male' || sex === 'female' ? sex : null,
+      birthdate: opt(formData, 'birthdate'),
+      neutered: neuteredRaw === 'yes' ? true : neuteredRaw === 'no' ? false : null,
+      weight_kg: weight,
+      height_cm: num(formData, 'height_cm'),
+      chest_cm: num(formData, 'chest_cm'),
+      neck_cm: num(formData, 'neck_cm'),
+      muzzle_cm: num(formData, 'muzzle_cm'),
+      activity_level: activity,
+      food_allergies: opt(formData, 'food_allergies'),
+      drug_allergies: opt(formData, 'drug_allergies'),
+      microchip_no: opt(formData, 'microchip_no'),
+      bma_reg_no: opt(formData, 'bma_reg_no'),
+    })
+    .eq('id', dogId);
+
+  const prevWeight = prev?.weight_kg == null ? null : Number(prev.weight_kg);
+  if (weight != null && weight !== prevWeight) {
+    await admin.from('weight_logs').insert({
+      dog_id: dogId,
+      weight_kg: weight,
+      logged_by: ownerId,
+    });
+  }
+
+  revalidatePath('/dashboard');
+  redirect(`/dashboard?dog=${dogId}&health=ok`);
+}
+
+/** Owner logs a single weight measurement (drives the trend graph). */
+export async function logWeight(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const weight = num(formData, 'weight_kg');
+  if (weight == null || weight === 0) return;
+  const measuredAt = opt(formData, 'measured_at');
+
+  const admin = createServiceClient();
+  await admin.from('weight_logs').insert({
+    dog_id: dogId,
+    weight_kg: weight,
+    measured_at: measuredAt ?? undefined,
+    logged_by: ownerId,
+  });
+  // keep the dog's current snapshot in sync
+  await admin.from('dogs').update({ weight_kg: weight }).eq('id', dogId);
+
+  revalidatePath('/dashboard');
+}
+
+/** Owner adds a vaccination record for the timeline. */
+export async function addVaccination(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const name = String(formData.get('name') ?? '').trim();
+  if (!name) return;
+
+  const admin = createServiceClient();
+  await admin.from('vaccinations').insert({
+    dog_id: dogId,
+    name,
+    given_on: opt(formData, 'given_on'),
+    next_due_on: opt(formData, 'next_due_on'),
+    clinic: opt(formData, 'clinic'),
+    logged_by: ownerId,
+  });
+
+  revalidatePath('/dashboard');
+}
+
+/** Owner deletes a vaccination record. */
+export async function deleteVaccination(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const vaccId = String(formData.get('vaccId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const admin = createServiceClient();
+  await admin.from('vaccinations').delete().eq('id', vaccId).eq('dog_id', dogId);
+
+  revalidatePath('/dashboard');
 }
 
 /** Owner uploads / replaces their dog's profile photo. */

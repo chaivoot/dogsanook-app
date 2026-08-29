@@ -7,8 +7,10 @@ import type {
   LessonProgressView,
   Profile,
   SessionPhoto,
+  Vaccination,
   VoucherCampaign,
   VoucherClaim,
+  WeightLog,
 } from '@/lib/types';
 
 const DOG_WITH_OWNERS = '*, dog_owners(owner:profiles(id, display_name))';
@@ -55,6 +57,28 @@ export async function getDogById(dogId: string): Promise<DogWithOwners | null> {
     .eq('id', dogId)
     .maybeSingle();
   return (data as DogWithOwners) ?? null;
+}
+
+/** Weight history for the trend graph, oldest → newest. */
+export async function getWeightLogs(dogId: string): Promise<WeightLog[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('weight_logs')
+    .select('*')
+    .eq('dog_id', dogId)
+    .order('measured_at', { ascending: true });
+  return (data as WeightLog[]) ?? [];
+}
+
+/** Vaccination records for the timeline, most recent first. */
+export async function getVaccinations(dogId: string): Promise<Vaccination[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('vaccinations')
+    .select('*')
+    .eq('dog_id', dogId)
+    .order('given_on', { ascending: false, nullsFirst: false });
+  return (data as Vaccination[]) ?? [];
 }
 
 /** Dogs a given profile owns or co-owns (owner dashboard). */
