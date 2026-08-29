@@ -44,16 +44,22 @@ export function intakeKcal(
   return Math.round((grams / 100) * kcalPer100g);
 }
 
-/** Compare actual intake against DER → feeding assessment (±10% = on target). */
+/**
+ * Assess intake against the healthy band RER..DER.
+ * Below RER = too little (unsafe); within RER..DER = fine (a mild deficit is
+ * good for an overweight dog); above DER = too much (weight gain).
+ */
 export function feedingStatus(
   intake: number | null,
+  rer: number | null,
   der: number | null,
 ): { label: string; tone: 'under' | 'ok' | 'over'; pct: number } | null {
   if (intake == null || der == null || der <= 0) return null;
   const pct = Math.round((intake / der) * 100);
-  if (pct < 90) return { label: 'ให้น้อยกว่าที่ควร', tone: 'under', pct };
-  if (pct > 110) return { label: 'ให้มากกว่าที่ควร', tone: 'over', pct };
-  return { label: 'ให้พอดีกับ DER', tone: 'ok', pct };
+  if (rer != null && intake < rer)
+    return { label: 'น้อยเกินไป (ต่ำกว่า RER)', tone: 'under', pct };
+  if (intake > der) return { label: 'มากกว่าที่ควร (เกิน DER)', tone: 'over', pct };
+  return { label: 'อยู่ในช่วงเหมาะสม (RER–DER)', tone: 'ok', pct };
 }
 
 export const DOGEVITY_URL = 'https://dogevityfood.com';

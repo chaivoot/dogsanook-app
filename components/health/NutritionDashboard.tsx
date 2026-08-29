@@ -166,19 +166,27 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
         />
       </div>
 
-      <CurrentFoodCard dog={dog} der={der} />
+      <CurrentFoodCard dog={dog} rer={rer != null ? Math.round(rer) : null} der={der} />
 
       <FoodRecommendation dog={dog} />
     </div>
   );
 }
 
-function CurrentFoodCard({ dog, der }: { dog: Dog; der: number | null }) {
+function CurrentFoodCard({
+  dog,
+  rer,
+  der,
+}: {
+  dog: Dog;
+  rer: number | null;
+  der: number | null;
+}) {
   const foodIntake = intakeKcal(dog.current_food_grams, dog.current_food_kcal_per_100g);
   const treat = dog.treat_kcal != null ? Number(dog.treat_kcal) : null;
   const total =
     foodIntake != null || treat != null ? (foodIntake ?? 0) + (treat ?? 0) : null;
-  const status = feedingStatus(total, der);
+  const status = feedingStatus(total, rer, der);
   // "treats ≤ 10% of daily calories" guideline — key for a training brand.
   const treatPct = treat != null && der ? Math.round((treat / der) * 100) : null;
   const treatOverLimit = treatPct != null && treatPct > 10;
@@ -248,9 +256,19 @@ function CurrentFoodCard({ dog, der }: { dog: Dog; der: number | null }) {
                 <span className="text-brand-muted">ได้รับจริงรวม (อาหาร+ขนม)</span>
                 <span className="font-semibold text-brand-cream">≈ {total} kcal/วัน</span>
               </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#3a2f27]">
+              {/* track spans 0–140% of DER; the RER–DER band is the green zone */}
+              <div className="relative mt-2 h-2 rounded-full bg-[#3a2f27]">
+                {rer != null && (
+                  <div
+                    className="absolute inset-y-0 rounded-full bg-brand-green/25"
+                    style={{
+                      left: `${(rer / der) * 100 / 1.4}%`,
+                      width: `${(1 - rer / der) * 100 / 1.4}%`,
+                    }}
+                  />
+                )}
                 <div
-                  className="h-full rounded-full"
+                  className="absolute inset-y-0 left-0 rounded-full"
                   style={{
                     width: `${Math.min(140, status.pct) / 1.4}%`,
                     background:
@@ -261,10 +279,25 @@ function CurrentFoodCard({ dog, der }: { dog: Dog; der: number | null }) {
                           : '#ffcb05',
                   }}
                 />
+                {rer != null && (
+                  <span
+                    className="absolute -top-0.5 h-3 w-0.5 bg-white/40"
+                    style={{ left: `${(rer / der) * 100 / 1.4}%` }}
+                  />
+                )}
+                <span
+                  className="absolute -top-0.5 h-3 w-0.5 bg-white/60"
+                  style={{ left: `${100 / 1.4}%` }}
+                />
               </div>
               <div className={`mt-2 text-xs font-medium ${toneCls}`}>
-                {status.label} · {status.pct}% ของ DER ({der} kcal)
+                {status.label} · {status.pct}% ของ DER
               </div>
+              {rer != null && (
+                <div className="mt-1 text-[11px] text-brand-muted">
+                  ช่วงเหมาะสม {rer}–{der} kcal/วัน (RER–DER)
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-xs text-brand-muted">
