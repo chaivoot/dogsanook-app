@@ -9,6 +9,7 @@ import {
 } from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
 import HealthPassport from '@/components/health/HealthPassport';
+import FoodRecommendation from '@/components/health/FoodRecommendation';
 import SubmitButton from '@/components/SubmitButton';
 import ProfilePhotoUploader from '@/components/ProfilePhotoUploader';
 import DogAvatar from '@/components/DogAvatar';
@@ -232,6 +233,8 @@ async function DogSection({
         weightLogs={weightLogs}
         vaccinations={vaccinations}
       />
+
+      <FoodRecommendation dog={dog} />
 
       <MediaConsentCard dog={dog} />
 
