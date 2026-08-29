@@ -7,6 +7,7 @@ import {
   getLessons,
   getCampaignsWithCounts,
   getClaims,
+  getUpcomingVaccinations,
 } from '@/lib/data';
 import { dogOwners } from '@/lib/types';
 import AppHeader from '@/components/AppHeader';
@@ -41,9 +42,10 @@ export default async function AdminPage({
 
   const tab: Tab = searchParams.tab ?? 'users';
   const saved = searchParams.saved === '1';
-  const [profiles, dogs] = await Promise.all([
+  const [profiles, dogs, upcomingVaccines] = await Promise.all([
     getAllProfiles(),
     getAllDogs(),
+    getUpcomingVaccinations(31),
   ]);
   const owners = profiles.filter((p) => p.status !== 'blocked');
 
@@ -52,7 +54,13 @@ export default async function AdminPage({
       <AppHeader profile={profile} />
 
       <main className="mx-auto max-w-2xl px-5 py-6">
-        <h1 className="mb-4 text-2xl font-bold text-brand-cream">แผงครู</h1>
+        <h1 className="mb-4 text-2xl font-bold text-brand-cream">แอดมิน</h1>
+
+        <AdminOverview
+          dogCount={dogs.length}
+          userCount={profiles.length}
+          upcoming={upcomingVaccines}
+        />
 
         {saved && (
           <p className="mb-4 rounded-xl border border-brand-green/25 bg-brand-green/10 px-4 py-2.5 text-sm text-brand-green">
@@ -170,6 +178,98 @@ function TabLink({
         </span>
       ) : null}
     </Link>
+  );
+}
+
+function AdminOverview({
+  dogCount,
+  userCount,
+  upcoming,
+}: {
+  dogCount: number;
+  userCount: number;
+  upcoming: {
+    dogId: string;
+    dogName: string;
+    name: string;
+    nextDueOn: string;
+    days: number;
+  }[];
+}) {
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+
+  return (
+    <section className="mb-6 space-y-3">
+      <div className="grid grid-cols-3 gap-3">
+        <Stat label="น้องหมา" value={dogCount} />
+        <Stat label="ผู้ใช้" value={userCount} />
+        <Stat label="วัคซีนใกล้ครบ" value={upcoming.length} highlight={upcoming.length > 0} />
+      </div>
+
+      {upcoming.length > 0 && (
+        <div className="dark-card">
+          <p className="mb-2 text-sm font-semibold text-brand-cream">
+            วัคซีนใกล้ครบกำหนด (31 วัน)
+          </p>
+          <ul className="space-y-1.5">
+            {upcoming.slice(0, 6).map((v) => (
+              <li
+                key={`${v.dogId}-${v.name}`}
+                className="flex items-center justify-between gap-2 text-sm"
+              >
+                <Link
+                  href={`/admin?tab=progress&dog=${v.dogId}`}
+                  className="min-w-0 truncate text-brand-cream hover:text-brand-gold"
+                >
+                  <span className="font-medium">{v.dogName}</span>{' '}
+                  <span className="text-brand-muted">· {v.name}</span>
+                </Link>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                    v.days < 0
+                      ? 'bg-red-500/15 text-red-300'
+                      : 'bg-brand-gold/15 text-brand-gold'
+                  }`}
+                >
+                  {v.days < 0
+                    ? `เลย ${Math.abs(v.days)} วัน`
+                    : v.days === 0
+                      ? 'วันนี้'
+                      : `${fmt(v.nextDueOn)} · อีก ${v.days} วัน`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {upcoming.length > 6 && (
+            <p className="mt-2 text-xs text-brand-muted">
+              และอีก {upcoming.length - 6} รายการ
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="rounded-card border border-white/5 bg-brand-bgSoft p-4 text-center">
+      <div
+        className={`text-2xl font-bold ${highlight ? 'text-brand-gold' : 'text-brand-cream'}`}
+      >
+        {value}
+      </div>
+      <div className="mt-0.5 text-xs text-brand-muted">{label}</div>
+    </div>
   );
 }
 

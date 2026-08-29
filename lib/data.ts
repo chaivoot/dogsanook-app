@@ -71,6 +71,65 @@ export async function getWeightLogs(dogId: string): Promise<WeightLog[]> {
   return (data as WeightLog[]) ?? [];
 }
 
+/** Across all dogs: the latest dose per (dog, vaccine) that is due within
+ *  `withinDays` days (overdue included), soonest first — for the admin overview. */
+export async function getUpcomingVaccinations(
+  withinDays = 31,
+): Promise<
+  { dogId: string; dogName: string; name: string; nextDueOn: string; days: number }[]
+> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('vaccinations')
+    .select('dog_id, name, given_on, next_due_on, dog:dogs(name)')
+    .not('next_due_on', 'is', null);
+
+  const rows =
+    (data as unknown as {
+      dog_id: string;
+      name: string;
+      given_on: string | null;
+      next_due_on: string;
+      dog: { name: string | null } | null;
+    }[]) ?? [];
+
+  // keep only the latest dose per (dog, vaccine name)
+  const latest = new Map<string, (typeof rows)[number]>();
+  for (const r of rows) {
+    const key = `${r.dog_id}|${r.name.trim()}`;
+    const cur = latest.get(key);
+    const a = r.given_on ? Date.parse(r.given_on) : -Infinity;
+    const b = cur?.given_on ? Date.parse(cur.given_on) : -Infinity;
+    if (!cur || a > b) latest.set(key, r);
+  }
+
+  const now = new Date();
+  const b = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const out: {
+    dogId: string;
+    dogName: string;
+    name: string;
+    nextDueOn: string;
+    days: number;
+  }[] = [];
+  for (const r of latest.values()) {
+    const due = new Date(r.next_due_on);
+    if (Number.isNaN(due.getTime())) continue;
+    const a = Date.UTC(due.getFullYear(), due.getMonth(), due.getDate());
+    const days = Math.round((a - b) / 86400000);
+    if (days < withinDays)
+      out.push({
+        dogId: r.dog_id,
+        dogName: r.dog?.name ?? 'ไม่ระบุ',
+        name: r.name,
+        nextDueOn: r.next_due_on,
+        days,
+      });
+  }
+  out.sort((x, y) => x.days - y.days);
+  return out;
+}
+
 /** Vaccination records for the timeline, most recent first. */
 export async function getVaccinations(dogId: string): Promise<Vaccination[]> {
   const supabase = createServiceClient();

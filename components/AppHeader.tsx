@@ -17,7 +17,7 @@ export default function AppHeader({ profile }: { profile: Profile }) {
               href="/admin"
               className="rounded-full bg-brand-green/20 px-3 py-1 text-xs font-medium text-brand-green hover:bg-brand-green/30"
             >
-              แผงครู
+              แอดมิน
             </Link>
           )}
           <span className="hidden text-sm text-brand-muted sm:inline">
