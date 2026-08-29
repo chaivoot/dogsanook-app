@@ -56,6 +56,17 @@ export interface Dog {
   treat_note: string | null;
 }
 
+export interface DogInvite {
+  token: string;
+  dog_id: string;
+  created_by: string | null;
+  created_at: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  used_count: number;
+  revoked: boolean;
+}
+
 export interface WeightLog {
   id: string;
   dog_id: string;

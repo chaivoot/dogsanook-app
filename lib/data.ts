@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import type {
   Dog,
+  DogInvite,
   DogLessonProgress,
   DogWithOwners,
   Lesson,
@@ -79,6 +80,38 @@ export async function getVaccinations(dogId: string): Promise<Vaccination[]> {
     .eq('dog_id', dogId)
     .order('given_on', { ascending: false, nullsFirst: false });
   return (data as Vaccination[]) ?? [];
+}
+
+/** Active (not revoked) invites for a dog, newest first. */
+export async function getDogInvites(dogId: string): Promise<DogInvite[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('dog_invites')
+    .select('*')
+    .eq('dog_id', dogId)
+    .eq('revoked', false)
+    .order('created_at', { ascending: false });
+  return (data as DogInvite[]) ?? [];
+}
+
+/** An invite token together with its dog (for the accept page). */
+export async function getInviteWithDog(
+  token: string,
+): Promise<{ invite: DogInvite; dog: Dog } | null> {
+  const supabase = createServiceClient();
+  const { data: invite } = await supabase
+    .from('dog_invites')
+    .select('*')
+    .eq('token', token)
+    .maybeSingle();
+  if (!invite) return null;
+  const { data: dog } = await supabase
+    .from('dogs')
+    .select('*')
+    .eq('id', (invite as DogInvite).dog_id)
+    .maybeSingle();
+  if (!dog) return null;
+  return { invite: invite as DogInvite, dog: dog as Dog };
 }
 
 /** Dogs a given profile owns or co-owns (owner dashboard). */

@@ -380,6 +380,90 @@ export async function deleteVaccination(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
+/** Owner creates a co-owner invite (link/QR), valid 14 days. */
+export async function createDogInvite(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const token = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '');
+  const expires = new Date();
+  expires.setDate(expires.getDate() + 14);
+
+  const admin = createServiceClient();
+  await admin.from('dog_invites').insert({
+    token,
+    dog_id: dogId,
+    created_by: ownerId,
+    expires_at: expires.toISOString(),
+  });
+
+  revalidatePath('/dashboard');
+}
+
+/** Owner revokes an invite. */
+export async function revokeDogInvite(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const token = String(formData.get('token'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const admin = createServiceClient();
+  await admin
+    .from('dog_invites')
+    .update({ revoked: true })
+    .eq('token', token)
+    .eq('dog_id', dogId);
+
+  revalidatePath('/dashboard');
+}
+
+/** A logged-in user accepts an invite and becomes a co-owner of the dog. */
+export async function acceptDogInvite(formData: FormData) {
+  const token = String(formData.get('token'));
+
+  const profile = await getCurrentProfile();
+  if (!profile || profile.status !== 'allowed') {
+    redirect(`/invite/${token}?e=auth`);
+  }
+
+  const admin = createServiceClient();
+  const { data: invite } = await admin
+    .from('dog_invites')
+    .select('*')
+    .eq('token', token)
+    .maybeSingle();
+
+  // Validate the invite is still usable.
+  const bad =
+    !invite ||
+    invite.revoked ||
+    (invite.expires_at && new Date(invite.expires_at) < new Date()) ||
+    (invite.max_uses != null && invite.used_count >= invite.max_uses);
+  if (bad) redirect(`/invite/${token}?e=invalid`);
+
+  const dogId = invite.dog_id as string;
+
+  // Skip if already an owner; otherwise add the co-owner link.
+  const { data: existing } = await admin
+    .from('dog_owners')
+    .select('owner_id')
+    .eq('dog_id', dogId)
+    .eq('owner_id', profile.id)
+    .maybeSingle();
+
+  if (!existing) {
+    await admin.from('dog_owners').insert({ dog_id: dogId, owner_id: profile.id });
+    await admin
+      .from('dog_invites')
+      .update({ used_count: (invite.used_count ?? 0) + 1 })
+      .eq('token', token);
+  }
+
+  revalidatePath('/dashboard');
+  redirect(`/dashboard?tab=info&dog=${dogId}&joined=1`);
+}
+
 /** Owner uploads / replaces their dog's profile photo. */
 export async function updateDogPhoto(formData: FormData) {
   const dogId = String(formData.get('dogId'));

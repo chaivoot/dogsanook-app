@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { Dog } from '@/lib/types';
+import type { Dog, DogInvite } from '@/lib/types';
 import { dogOwners } from '@/lib/types';
 import { requireProfile } from '@/lib/auth';
 import {
@@ -8,9 +8,11 @@ import {
   getDogProgress,
   getWeightLogs,
   getVaccinations,
+  getDogInvites,
 } from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
+import QrButton from '@/components/QrButton';
 import HealthPassport from '@/components/health/HealthPassport';
 import NutritionDashboard from '@/components/health/NutritionDashboard';
 import GraphDashboard from '@/components/health/GraphDashboard';
@@ -22,7 +24,13 @@ import Legend from '@/components/games/Legend';
 import OwnerGameCard from '@/components/games/OwnerGameCard';
 import PhotoGallery from '@/components/games/PhotoGallery';
 import DeleteDogButton from '@/components/DeleteDogButton';
-import { addDog, updateDog, setMediaConsent } from './actions';
+import {
+  addDog,
+  updateDog,
+  setMediaConsent,
+  createDogInvite,
+  revokeDogInvite,
+} from './actions';
 
 type Tab = 'info' | 'nutrition' | 'training' | 'manage';
 const TABS: Tab[] = ['info', 'nutrition', 'training', 'manage'];
@@ -36,6 +44,7 @@ export default async function DashboardPage({
     mc?: string;
     health?: string;
     food?: string;
+    joined?: string;
   };
 }) {
   const profile = await requireProfile();
@@ -66,6 +75,9 @@ export default async function DashboardPage({
         )}
         {searchParams.food === 'ok' && (
           <Banner tone="green">✓ บันทึกอาหารปัจจุบันเรียบร้อยแล้ว</Banner>
+        )}
+        {searchParams.joined === '1' && (
+          <Banner tone="green">✓ เข้าร่วมเป็นเจ้าของร่วมเรียบร้อยแล้ว 🎉</Banner>
         )}
 
         {dogs.length === 0 ? (
@@ -121,9 +133,12 @@ async function TabContent({
   }
 
   if (tab === 'manage') {
-    const withOwners = await getDogById(dog.id);
+    const [withOwners, invites] = await Promise.all([
+      getDogById(dog.id),
+      getDogInvites(dog.id),
+    ]);
     const owners = withOwners ? dogOwners(withOwners) : [];
-    return <ManageDog dog={dog} owners={owners} />;
+    return <ManageDog dog={dog} owners={owners} invites={invites} />;
   }
 
   const [{ lessons, photos }, weightLogs, vaccinations] = await Promise.all([
@@ -196,10 +211,15 @@ async function TabContent({
 function ManageDog({
   dog,
   owners,
+  invites,
 }: {
   dog: Dog;
   owners: { id: string; display_name: string | null }[];
+  invites: DogInvite[];
 }) {
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://app.dogsanook.com';
+
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-brand-cream">จัดการ{dog.name}</h1>
@@ -226,10 +246,56 @@ function ManageDog({
             </li>
           ))}
         </ul>
-        <div className="mt-3 rounded-xl border border-dashed border-white/10 px-3 py-3 text-center">
-          <p className="text-xs text-brand-muted">
-            เชิญเจ้าของร่วมด้วย QR / ลิงก์ — กำลังจะมาเร็วๆ นี้
+
+        {/* Co-owner invites (link / QR) */}
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <p className="mb-2 text-sm font-medium text-brand-cream">
+            เชิญเจ้าของร่วม
           </p>
+
+          {invites.length > 0 ? (
+            <div className="space-y-3">
+              {invites.map((inv) => {
+                const link = `${appUrl}/invite/${inv.token}`;
+                return (
+                  <div
+                    key={inv.token}
+                    className="rounded-xl border border-white/5 bg-brand-bg/50 p-3"
+                  >
+                    <p className="break-all text-xs text-brand-gold">{link}</p>
+                    <p className="mt-1 text-[11px] text-brand-muted">
+                      ใช้แล้ว {inv.used_count} ครั้ง
+                      {inv.expires_at
+                        ? ` · หมดอายุ ${new Date(inv.expires_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })}`
+                        : ''}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <QrButton url={link} filename={`invite-${dog.name}`} />
+                      <form action={revokeDogInvite}>
+                        <input type="hidden" name="dogId" value={dog.id} />
+                        <input type="hidden" name="token" value={inv.token} />
+                        <button
+                          type="submit"
+                          className="text-xs text-brand-muted hover:text-red-300"
+                        >
+                          ยกเลิกลิงก์
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-brand-muted">
+              ยังไม่มีลิงก์เชิญ — สร้างเพื่อให้คนอื่นสแกน/กดเข้าร่วมเป็นเจ้าของร่วม
+            </p>
+          )}
+
+          <form action={createDogInvite} className="mt-3">
+            <input type="hidden" name="dogId" value={dog.id} />
+            <SubmitButton pendingText="กำลังสร้าง…">+ สร้างลิงก์เชิญ (14 วัน)</SubmitButton>
+          </form>
         </div>
       </section>
 
