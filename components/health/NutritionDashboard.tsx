@@ -6,6 +6,9 @@ import {
   bcsStatus,
   ageLabelTh,
 } from '@/lib/der';
+import { intakeKcal, feedingStatus } from '@/lib/food';
+import SubmitButton from '@/components/SubmitButton';
+import { saveCurrentFood } from '@/app/dashboard/actions';
 import RingStat from './RingStat';
 import FoodRecommendation from './FoodRecommendation';
 
@@ -146,7 +149,143 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
         />
       </div>
 
+      <CurrentFoodCard dog={dog} der={der} />
+
       <FoodRecommendation dog={dog} />
     </div>
+  );
+}
+
+function CurrentFoodCard({ dog, der }: { dog: Dog; der: number | null }) {
+  const intake = intakeKcal(dog.current_food_grams, dog.current_food_kcal_per_100g);
+  const status = feedingStatus(intake, der);
+  const hasFood =
+    dog.current_food != null || dog.current_food_grams != null;
+
+  const toneCls =
+    status?.tone === 'ok'
+      ? 'text-brand-green'
+      : status?.tone === 'over'
+        ? 'text-[#f0a0a0]'
+        : 'text-brand-gold';
+
+  return (
+    <section className="rounded-card border border-white/5 bg-brand-bgSoft p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffcb05" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v20M15 2c-1.5 1-2 3-2 6s.5 5 2 6v8" />
+        </svg>
+        <span className="text-[15px] font-semibold text-brand-cream">อาหารปัจจุบัน</span>
+      </div>
+
+      {hasFood ? (
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-white/5 bg-brand-bg/50 px-4 py-3">
+            <div className="text-sm font-medium text-brand-cream">
+              {dog.current_food || 'อาหารที่ให้อยู่'}
+            </div>
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-brand-muted">
+              {dog.current_food_grams != null && <span>{dog.current_food_grams} ก./วัน</span>}
+              {dog.current_food_meals != null && <span>{dog.current_food_meals} มื้อ/วัน</span>}
+              {dog.current_food_kcal_per_100g != null && (
+                <span>{dog.current_food_kcal_per_100g} kcal/100ก.</span>
+              )}
+            </div>
+          </div>
+
+          {intake != null && der != null && status ? (
+            <div className="rounded-2xl border border-white/5 bg-brand-bg/50 px-4 py-3">
+              <div className="flex items-baseline justify-between text-sm">
+                <span className="text-brand-muted">ได้รับจริง</span>
+                <span className="font-semibold text-brand-cream">≈ {intake} kcal/วัน</span>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#3a2f27]">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(140, status.pct) / 1.4}%`,
+                    background:
+                      status.tone === 'ok'
+                        ? '#7cb342'
+                        : status.tone === 'over'
+                          ? '#e0894a'
+                          : '#ffcb05',
+                  }}
+                />
+              </div>
+              <div className={`mt-2 text-xs font-medium ${toneCls}`}>
+                {status.label} · {status.pct}% ของ DER ({der} kcal)
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-brand-muted">
+              ใส่ปริมาณ (กรัม/วัน) และ kcal/100ก. เพื่อเทียบกับ DER
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-brand-muted">
+          ยังไม่ได้บันทึกอาหารที่น้องกินอยู่ — เพิ่มด้านล่างเพื่อเทียบกับ DER
+        </p>
+      )}
+
+      <details className="mt-3">
+        <summary className="cursor-pointer text-sm text-brand-gold">
+          {hasFood ? 'แก้ไขอาหารปัจจุบัน' : '+ บันทึกอาหารปัจจุบัน'}
+        </summary>
+        <form action={saveCurrentFood} className="mt-3 space-y-3">
+          <input type="hidden" name="dogId" value={dog.id} />
+          <div>
+            <label className="label">ยี่ห้อ / ชื่ออาหาร</label>
+            <input
+              name="current_food"
+              defaultValue={dog.current_food ?? ''}
+              className="input"
+              placeholder="เช่น Royal Canin Medium Adult"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="label">กรัม/วัน</label>
+              <input
+                name="current_food_grams"
+                type="number"
+                step="1"
+                min="0"
+                defaultValue={dog.current_food_grams ?? ''}
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="label">มื้อ/วัน</label>
+              <input
+                name="current_food_meals"
+                type="number"
+                step="1"
+                min="0"
+                defaultValue={dog.current_food_meals ?? ''}
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="label">kcal/100ก.</label>
+              <input
+                name="current_food_kcal_per_100g"
+                type="number"
+                step="1"
+                min="0"
+                defaultValue={dog.current_food_kcal_per_100g ?? ''}
+                className="input"
+                placeholder="เช่น 380"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-brand-muted">
+            kcal/100ก. ดูได้จากถุงอาหาร (Metabolizable Energy) — ใส่เพื่อเทียบกับ DER
+          </p>
+          <SubmitButton pendingText="กำลังบันทึก…">บันทึกอาหาร</SubmitButton>
+        </form>
+      </details>
+    </section>
   );
 }

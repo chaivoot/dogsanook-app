@@ -297,6 +297,29 @@ export async function saveDogHealth(formData: FormData) {
   redirect(`/dashboard?dog=${dogId}&health=ok`);
 }
 
+/** Owner records what the dog currently eats (compared against DER). */
+export async function saveCurrentFood(formData: FormData) {
+  const dogId = String(formData.get('dogId'));
+  const ownerId = await requireDogOwner(dogId);
+  if (!ownerId) return;
+
+  const meals = num(formData, 'current_food_meals');
+
+  const admin = createServiceClient();
+  await admin
+    .from('dogs')
+    .update({
+      current_food: opt(formData, 'current_food'),
+      current_food_grams: num(formData, 'current_food_grams'),
+      current_food_kcal_per_100g: num(formData, 'current_food_kcal_per_100g'),
+      current_food_meals: meals == null ? null : Math.round(meals),
+    })
+    .eq('id', dogId);
+
+  revalidatePath('/dashboard');
+  redirect(`/dashboard?tab=nutrition&dog=${dogId}&food=ok`);
+}
+
 /** Owner logs a single weight measurement (drives the trend graph). */
 export async function logWeight(formData: FormData) {
   const dogId = String(formData.get('dogId'));

@@ -30,7 +30,13 @@ const TABS: Tab[] = ['info', 'nutrition', 'training', 'manage'];
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { dog?: string; tab?: string; mc?: string; health?: string };
+  searchParams: {
+    dog?: string;
+    tab?: string;
+    mc?: string;
+    health?: string;
+    food?: string;
+  };
 }) {
   const profile = await requireProfile();
   const dogs = await getDogsForOwner(profile.id);
@@ -57,6 +63,9 @@ export default async function DashboardPage({
         )}
         {searchParams.health === 'ok' && (
           <Banner tone="green">✓ บันทึกข้อมูลสุขภาพเรียบร้อยแล้ว</Banner>
+        )}
+        {searchParams.food === 'ok' && (
+          <Banner tone="green">✓ บันทึกอาหารปัจจุบันเรียบร้อยแล้ว</Banner>
         )}
 
         {dogs.length === 0 ? (

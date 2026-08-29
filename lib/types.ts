@@ -48,6 +48,10 @@ export interface Dog {
   bma_reg_no: string | null;
   bcs: number | null;
   target_weight_kg: number | null;
+  current_food: string | null;
+  current_food_grams: number | null;
+  current_food_kcal_per_100g: number | null;
+  current_food_meals: number | null;
 }
 
 export interface WeightLog {
