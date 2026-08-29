@@ -169,65 +169,6 @@ async function DogSection({
 
   return (
     <div className="space-y-6">
-      {/* Dog header */}
-      <section className="dark-card">
-        <div className="flex items-center gap-4">
-          <DogAvatar dog={dog} size={72} />
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold text-brand-cream">
-              {dog.name}
-            </h1>
-            {dog.breed && (
-              <p className="text-sm text-brand-muted">{dog.breed}</p>
-            )}
-          </div>
-        </div>
-        {dog.notes && (
-          <p className="mt-3 rounded-xl bg-brand-bg/60 px-3 py-2 text-sm text-brand-muted">
-            {dog.notes}
-          </p>
-        )}
-
-        <details className="mt-4">
-          <summary className="cursor-pointer text-sm text-brand-gold">
-            แก้ไขรายละเอียดน้อง
-          </summary>
-          <div className="mt-3 space-y-4">
-            <form action={updateDog} className="space-y-3">
-              <input type="hidden" name="dogId" value={dog.id} />
-              <div>
-                <label className="label">ชื่อน้อง</label>
-                <input name="name" defaultValue={dog.name} required className="input" />
-              </div>
-              <div>
-                <label className="label">พันธุ์</label>
-                <input name="breed" defaultValue={dog.breed ?? ''} className="input" />
-              </div>
-              <div>
-                <label className="label">โน้ต</label>
-                <textarea
-                  name="notes"
-                  defaultValue={dog.notes ?? ''}
-                  rows={2}
-                  className="input"
-                />
-              </div>
-              <SubmitButton>บันทึก</SubmitButton>
-            </form>
-
-            <div className="space-y-2">
-              <label className="label">รูปน้อง</label>
-              <ProfilePhotoUploader dogId={dog.id} />
-            </div>
-
-            <div className="border-t border-white/10 pt-4">
-              <p className="mb-2 text-xs text-brand-muted">โซนอันตราย</p>
-              <DeleteDogButton dogId={dog.id} dogName={dog.name} />
-            </div>
-          </div>
-        </details>
-      </section>
-
       <HealthPassport
         dog={dog}
         weightLogs={weightLogs}
@@ -236,7 +177,53 @@ async function DogSection({
 
       <FoodRecommendation dog={dog} />
 
+      {dog.notes && (
+        <p className="rounded-card border border-white/5 bg-brand-bgSoft px-4 py-3 text-sm text-brand-muted">
+          {dog.notes}
+        </p>
+      )}
+
       <MediaConsentCard dog={dog} />
+
+      {/* Manage: name / breed / notes / photo / delete */}
+      <details className="dark-card">
+        <summary className="cursor-pointer text-sm font-medium text-brand-gold">
+          จัดการน้อง (แก้ชื่อ · รูป · ลบ)
+        </summary>
+        <div className="mt-4 space-y-4">
+          <form action={updateDog} className="space-y-3">
+            <input type="hidden" name="dogId" value={dog.id} />
+            <div>
+              <label className="label">ชื่อน้อง</label>
+              <input name="name" defaultValue={dog.name} required className="input" />
+            </div>
+            <div>
+              <label className="label">พันธุ์</label>
+              <input name="breed" defaultValue={dog.breed ?? ''} className="input" />
+            </div>
+            <div>
+              <label className="label">โน้ต</label>
+              <textarea
+                name="notes"
+                defaultValue={dog.notes ?? ''}
+                rows={2}
+                className="input"
+              />
+            </div>
+            <SubmitButton>บันทึก</SubmitButton>
+          </form>
+
+          <div className="space-y-2">
+            <label className="label">รูปน้อง</label>
+            <ProfilePhotoUploader dogId={dog.id} />
+          </div>
+
+          <div className="border-t border-white/10 pt-4">
+            <p className="mb-2 text-xs text-brand-muted">โซนอันตราย</p>
+            <DeleteDogButton dogId={dog.id} dogName={dog.name} />
+          </div>
+        </div>
+      </details>
 
       <ProgressSummary lessons={lessons} />
 
