@@ -1,20 +1,24 @@
 import type { WeightLog } from '@/lib/types';
 
+// Faint sample line so the weight card always shows a trend — filled in with
+// real data once the owner logs a couple of weigh-ins.
+const SAMPLE = [11.7, 11.9, 11.8, 12.1, 12.2, 12.4];
+
 /** Area/line sparkline of weight over time. Pure inline SVG, no client JS. */
 export default function WeightTrend({ logs }: { logs: WeightLog[] }) {
-  if (logs.length < 2) return null;
+  const isSample = logs.length < 2;
 
   const W = 320;
   const H = 96;
   const pad = 6;
-  const weights = logs.map((l) => Number(l.weight_kg));
+  const weights = isSample ? SAMPLE : logs.map((l) => Number(l.weight_kg));
   const min = Math.min(...weights);
   const max = Math.max(...weights);
   const span = max - min || 1;
 
-  const pts = logs.map((l, i) => {
-    const x = pad + (i / (logs.length - 1)) * (W - pad * 2);
-    const y = pad + (1 - (Number(l.weight_kg) - min) / span) * (H - pad * 2);
+  const pts = weights.map((w, i) => {
+    const x = pad + (i / (weights.length - 1)) * (W - pad * 2);
+    const y = pad + (1 - (w - min) / span) * (H - pad * 2);
     return [x, y] as const;
   });
 
@@ -28,7 +32,7 @@ export default function WeightTrend({ logs }: { logs: WeightLog[] }) {
     <svg
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="none"
-      className="mt-3 block h-24 w-full"
+      className={`mt-3 block h-24 w-full ${isSample ? 'opacity-30' : ''}`}
       role="img"
       aria-label="กราฟน้ำหนัก"
     >
