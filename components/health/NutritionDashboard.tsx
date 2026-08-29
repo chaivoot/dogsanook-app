@@ -53,14 +53,31 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
 
   const hasWeight = dog.weight_kg != null;
 
-  // weight-vs-target: full ring when on target, shrinking as it drifts
+  // weight-vs-target: full ring when on target, shrinking as it drifts —
+  // and coloured so being over target reads as a warning, not "all good".
   const target = dog.target_weight_kg;
+  const w = hasWeight ? Number(dog.weight_kg) : null;
   const weightFrac =
-    hasWeight && target
-      ? Math.max(0.1, 1 - Math.min(1, Math.abs(Number(dog.weight_kg) - Number(target)) / Number(target)))
+    w != null && target
+      ? Math.max(0.1, 1 - Math.min(1, Math.abs(w - Number(target)) / Number(target)))
       : hasWeight
         ? 1
         : 0;
+  let weightColor = '#006b73'; // no target → neutral teal, no implied verdict
+  let weightFooter = target ? `เป้า ${target} กก.` : 'ตั้งเป้าได้ในแท็บน้องหมา';
+  if (w != null && target) {
+    const t = Number(target);
+    if (w > t * 1.05) {
+      weightColor = '#e0894a'; // over target → amber warning
+      weightFooter = `เกินเป้า ${(w - t).toFixed(1)} กก. (เป้า ${target})`;
+    } else if (w < t * 0.95) {
+      weightColor = '#3b82f6'; // under target → blue
+      weightFooter = `ต่ำกว่าเป้า ${(t - w).toFixed(1)} กก. (เป้า ${target})`;
+    } else {
+      weightColor = '#5f9a34'; // on target → green
+      weightFooter = `ตรงเป้า ${target} กก.`;
+    }
+  }
 
   const bcsTone =
     bcs?.tone === 'ideal' ? '#5f9a34' : bcs?.tone === 'low' ? '#3b82f6' : '#e0894a';
@@ -143,9 +160,9 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
           title="น้ำหนัก"
           center={hasWeight ? String(dog.weight_kg) : '–'}
           unit="กก."
-          footer={target ? `เป้า ${target} กก.` : 'ตั้งเป้าได้ในแท็บน้องหมา'}
+          footer={weightFooter}
           fraction={weightFrac}
-          color="#5f9a34"
+          color={weightColor}
         />
       </div>
 
