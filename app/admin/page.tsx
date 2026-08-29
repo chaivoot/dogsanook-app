@@ -8,6 +8,7 @@ import {
   getCampaignsWithCounts,
   getClaims,
   getUpcomingVaccinations,
+  getReferrals,
 } from '@/lib/data';
 import { dogOwners } from '@/lib/types';
 import AppHeader from '@/components/AppHeader';
@@ -27,10 +28,11 @@ import {
   updateCampaign,
   toggleCampaign,
   setClaimStatus,
+  createReferralReward,
 } from './actions';
 import { redirect } from 'next/navigation';
 
-type Tab = 'users' | 'dogs' | 'guides' | 'vouchers' | 'progress';
+type Tab = 'users' | 'dogs' | 'guides' | 'vouchers' | 'referrals' | 'progress';
 
 export default async function AdminPage({
   searchParams,
@@ -74,6 +76,7 @@ export default async function AdminPage({
           <TabLink tab="dogs" current={tab} label="น้องหมา" />
           <TabLink tab="guides" current={tab} label="คู่มือ" />
           <TabLink tab="vouchers" current={tab} label="Voucher" />
+          <TabLink tab="referrals" current={tab} label="แนะนำเพื่อน" />
         </nav>
 
         {tab === 'users' && (
@@ -141,6 +144,8 @@ export default async function AdminPage({
         {tab === 'guides' && <GuidesEditor />}
 
         {tab === 'vouchers' && <VoucherManager />}
+
+        {tab === 'referrals' && <ReferralsManager />}
 
         {tab === 'progress' && searchParams.dog && (
           <ProgressManager dogId={searchParams.dog} />
@@ -547,6 +552,68 @@ async function VoucherManager() {
           ))
         )}
       </section>
+    </div>
+  );
+}
+
+async function ReferralsManager() {
+  const referrals = await getReferrals();
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-brand-muted">
+        คนที่สมัครผ่านลิงก์แนะนำ — เมื่อเขาซื้อบริการ (นอกแอป) กดบันทึกส่วนแบ่งให้คนแนะนำได้ที่นี่
+      </p>
+
+      {referrals.length === 0 ? (
+        <p className="text-sm text-brand-muted">ยังไม่มีคนสมัครผ่านลิงก์แนะนำ</p>
+      ) : (
+        referrals.map(({ referred, referrerName }) => (
+          <div key={referred.id} className="dark-card">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium text-brand-cream">
+                  {referred.display_name || 'ผู้ใช้'}
+                </p>
+                <p className="text-xs text-brand-muted">
+                  แนะนำโดย <span className="text-brand-gold">{referrerName || 'ไม่ทราบ'}</span>
+                  {' · '}
+                  {new Date(referred.created_at).toLocaleDateString('th-TH', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: '2-digit',
+                  })}
+                </p>
+              </div>
+            </div>
+
+            <details className="mt-3">
+              <summary className="cursor-pointer text-sm text-brand-gold">
+                + บันทึกส่วนแบ่ง (เมื่อซื้อแล้ว)
+              </summary>
+              <form action={createReferralReward} className="mt-3 space-y-2">
+                <input type="hidden" name="referredId" value={referred.id} />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="label">ยอดส่วนแบ่ง (บาท)</label>
+                    <input
+                      name="amount"
+                      inputMode="numeric"
+                      className="input"
+                      placeholder="เช่น 200"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">หมายเหตุ</label>
+                    <input name="note" className="input" placeholder="เช่น ซื้ออาหาร 1 ถุง" />
+                  </div>
+                </div>
+                <SubmitButton>บันทึกส่วนแบ่ง</SubmitButton>
+              </form>
+            </details>
+          </div>
+        ))
+      )}
     </div>
   );
 }

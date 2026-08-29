@@ -17,7 +17,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/auth') ||
     pathname.startsWith('/claim') ||
     pathname.startsWith('/games') ||
-    pathname.startsWith('/invite');
+    pathname.startsWith('/invite') ||
+    pathname.startsWith('/r/');
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const payload = await verifySessionToken(token);

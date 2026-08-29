@@ -380,6 +380,24 @@ export async function deleteVaccination(formData: FormData) {
   revalidatePath('/dashboard');
 }
 
+/** Give the current user a referral code (once), if they don't have one. */
+export async function createReferralCode() {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.status !== 'allowed' || profile.referral_code) return;
+
+  const admin = createServiceClient();
+  for (let i = 0; i < 5; i++) {
+    const code = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+    const { error } = await admin
+      .from('profiles')
+      .update({ referral_code: code })
+      .eq('id', profile.id)
+      .is('referral_code', null); // don't overwrite if set meanwhile
+    if (!error) break;
+  }
+  revalidatePath('/dashboard');
+}
+
 /** Owner creates a co-owner invite (link/QR), valid 14 days. */
 export async function createDogInvite(formData: FormData) {
   const dogId = String(formData.get('dogId'));

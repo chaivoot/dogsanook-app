@@ -94,6 +94,22 @@ export async function GET(request: Request) {
       return fail('profile_create_failed');
     }
     profileId = created.id;
+
+    // Referral attribution: if they arrived via /r/<code>, link the referrer.
+    const refCode = cookies().get('ds_ref')?.value?.trim();
+    if (refCode) {
+      const { data: referrer } = await admin
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', refCode)
+        .maybeSingle();
+      if (referrer && referrer.id !== created.id) {
+        await admin
+          .from('profiles')
+          .update({ referred_by: referrer.id })
+          .eq('id', created.id);
+      }
+    }
   } else {
     // keep the display name fresh
     await admin.from('profiles').update({ display_name: name }).eq('id', profileId);
@@ -123,5 +139,6 @@ export async function GET(request: Request) {
   res.cookies.set('line_oauth_state', '', { path: '/', maxAge: 0 });
   res.cookies.set('line_oauth_nonce', '', { path: '/', maxAge: 0 });
   res.cookies.set('line_oauth_next', '', { path: '/', maxAge: 0 });
+  res.cookies.set('ds_ref', '', { path: '/', maxAge: 0 });
   return res;
 }

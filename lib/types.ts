@@ -10,6 +10,18 @@ export interface Profile {
   role: Role;
   status: UserStatus;
   created_at: string;
+  referral_code: string | null;
+  referred_by: string | null;
+}
+
+export interface ReferralReward {
+  id: string;
+  referrer_id: string;
+  referred_id: string | null;
+  amount: number | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
 }
 
 export type DogSex = 'male' | 'female';

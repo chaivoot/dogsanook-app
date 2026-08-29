@@ -177,7 +177,7 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
 
 /** "โทรปรึกษาโภชนาการ" CTA — set NEXT_PUBLIC_CONSULT_PHONE to enable. */
 function ConsultButton() {
-  const phone = process.env.NEXT_PUBLIC_CONSULT_PHONE?.trim();
+  const phone = process.env.NEXT_PUBLIC_CONSULT_PHONE?.trim() || '0819496389';
   if (!phone) return null;
   const tel = phone.replace(/[^+\d]/g, '');
   return (

@@ -141,6 +141,58 @@ export async function getVaccinations(dogId: string): Promise<Vaccination[]> {
   return (data as Vaccination[]) ?? [];
 }
 
+/** A user's referral numbers: people they brought in + rewards credited. */
+export async function getReferralStats(
+  profileId: string,
+): Promise<{ referredCount: number; rewardTotal: number; rewardCount: number }> {
+  const supabase = createServiceClient();
+  const [countRes, rewardsRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('referred_by', profileId),
+    supabase.from('referral_rewards').select('amount').eq('referrer_id', profileId),
+  ]);
+  const rewards = (rewardsRes.data as { amount: number | null }[]) ?? [];
+  const rewardTotal = rewards.reduce((s, r) => s + (r.amount ? Number(r.amount) : 0), 0);
+  return {
+    referredCount: countRes.count ?? 0,
+    rewardTotal,
+    rewardCount: rewards.length,
+  };
+}
+
+/** All referred users with their referrer's name (admin referral view). */
+export async function getReferrals(): Promise<
+  { referred: Profile; referrerName: string | null }[]
+> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .not('referred_by', 'is', null)
+    .order('created_at', { ascending: false });
+  const referred = (data as Profile[]) ?? [];
+
+  const referrerIds = [
+    ...new Set(referred.map((p) => p.referred_by).filter(Boolean) as string[]),
+  ];
+  const nameById = new Map<string, string | null>();
+  if (referrerIds.length) {
+    const { data: referrers } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', referrerIds);
+    for (const r of (referrers as { id: string; display_name: string | null }[]) ?? [])
+      nameById.set(r.id, r.display_name);
+  }
+
+  return referred.map((p) => ({
+    referred: p,
+    referrerName: p.referred_by ? nameById.get(p.referred_by) ?? null : null,
+  }));
+}
+
 /** Active (not revoked) invites for a dog, newest first. */
 export async function getDogInvites(dogId: string): Promise<DogInvite[]> {
   const supabase = createServiceClient();

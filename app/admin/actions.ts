@@ -299,3 +299,34 @@ export async function deleteSessionPhoto(formData: FormData) {
   await admin.from('session_photos').delete().eq('id', id);
   revalidatePath('/admin');
 }
+
+// --- Referrals ---------------------------------------------------------------
+
+/** Admin credits a referrer when their referred customer buys (offline). */
+export async function createReferralReward(formData: FormData) {
+  if (!(await ensureStaff())) return;
+  const me = await getCurrentProfile();
+  const referredId = String(formData.get('referredId'));
+
+  const admin = createServiceClient();
+  const { data: rp } = await admin
+    .from('profiles')
+    .select('referred_by')
+    .eq('id', referredId)
+    .maybeSingle();
+  const referrerId = rp?.referred_by as string | undefined;
+  if (!referrerId) return;
+
+  const amountRaw = String(formData.get('amount') ?? '').trim();
+  const amount = amountRaw ? Number(amountRaw) : null;
+  const note = String(formData.get('note') ?? '').trim() || null;
+
+  await admin.from('referral_rewards').insert({
+    referrer_id: referrerId,
+    referred_id: referredId,
+    amount: amount != null && Number.isFinite(amount) ? amount : null,
+    note,
+    created_by: me?.id ?? null,
+  });
+  revalidatePath('/admin');
+}

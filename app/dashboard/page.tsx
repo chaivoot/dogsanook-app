@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { Dog, DogInvite } from '@/lib/types';
+import type { Dog, DogInvite, Profile } from '@/lib/types';
 import { dogOwners } from '@/lib/types';
 import { requireProfile } from '@/lib/auth';
 import {
@@ -9,6 +9,7 @@ import {
   getWeightLogs,
   getVaccinations,
   getDogInvites,
+  getReferralStats,
 } from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
@@ -30,6 +31,7 @@ import {
   setMediaConsent,
   createDogInvite,
   revokeDogInvite,
+  createReferralCode,
 } from './actions';
 
 type Tab = 'info' | 'nutrition' | 'training' | 'manage';
@@ -108,7 +110,7 @@ export default async function DashboardPage({
             )}
 
             {activeDog && (
-              <TabContent tab={tab} dog={activeDog} ownerId={profile.id} />
+              <TabContent tab={tab} dog={activeDog} profile={profile} />
             )}
           </>
         )}
@@ -122,23 +124,34 @@ export default async function DashboardPage({
 async function TabContent({
   tab,
   dog,
-  ownerId,
+  profile,
 }: {
   tab: Tab;
   dog: Dog;
-  ownerId: string;
+  profile: Profile;
 }) {
+  const ownerId = profile.id;
+
   if (tab === 'nutrition') {
     return <NutritionDashboard dog={dog} />;
   }
 
   if (tab === 'manage') {
-    const [withOwners, invites] = await Promise.all([
+    const [withOwners, invites, refStats] = await Promise.all([
       getDogById(dog.id),
       getDogInvites(dog.id),
+      getReferralStats(profile.id),
     ]);
     const owners = withOwners ? dogOwners(withOwners) : [];
-    return <ManageDog dog={dog} owners={owners} invites={invites} />;
+    return (
+      <ManageDog
+        dog={dog}
+        owners={owners}
+        invites={invites}
+        referralCode={profile.referral_code}
+        refStats={refStats}
+      />
+    );
   }
 
   const [{ lessons, photos }, weightLogs, vaccinations] = await Promise.all([
@@ -212,10 +225,14 @@ function ManageDog({
   dog,
   owners,
   invites,
+  referralCode,
+  refStats,
 }: {
   dog: Dog;
   owners: { id: string; display_name: string | null }[];
   invites: DogInvite[];
+  referralCode: string | null;
+  refStats: { referredCount: number; rewardTotal: number; rewardCount: number };
 }) {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://app.dogsanook.com';
@@ -223,6 +240,45 @@ function ManageDog({
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-brand-cream">จัดการ{dog.name}</h1>
+
+      {/* Referral — per user, not per dog */}
+      <section className="dark-card">
+        <p className="text-sm font-semibold text-brand-cream">แนะนำเพื่อน · รับส่วนแบ่ง</p>
+        <p className="mt-1 text-xs text-brand-muted">
+          เพื่อนสมัครผ่านลิงก์ของคุณแล้วซื้อบริการ — คุณได้ส่วนแบ่งรายได้
+        </p>
+
+        {referralCode ? (
+          <div className="mt-3 space-y-3">
+            <div className="flex gap-3">
+              <div className="flex-1 rounded-xl border border-white/5 bg-brand-bg/50 p-3 text-center">
+                <div className="text-xl font-bold text-brand-gold">
+                  {refStats.referredCount}
+                </div>
+                <div className="text-[11px] text-brand-muted">คนที่แนะนำ</div>
+              </div>
+              <div className="flex-1 rounded-xl border border-white/5 bg-brand-bg/50 p-3 text-center">
+                <div className="text-xl font-bold text-brand-green">
+                  ฿{refStats.rewardTotal.toLocaleString()}
+                </div>
+                <div className="text-[11px] text-brand-muted">
+                  ส่วนแบ่งสะสม ({refStats.rewardCount} ครั้ง)
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-brand-bg/50 p-3">
+              <p className="break-all text-xs text-brand-gold">{`${appUrl}/r/${referralCode}`}</p>
+              <div className="mt-2">
+                <QrButton url={`${appUrl}/r/${referralCode}`} filename="referral" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <form action={createReferralCode} className="mt-3">
+            <SubmitButton pendingText="กำลังสร้าง…">สร้างลิงก์แนะนำเพื่อน</SubmitButton>
+          </form>
+        )}
+      </section>
 
       {/* co-owners (many-to-many) */}
       <section className="dark-card">
