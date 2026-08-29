@@ -11,11 +11,8 @@ const ICONS: Record<Tab, React.ReactNode> = {
     </>
   ),
   nutrition: (
-    // food drop
-    <>
-      <path d="M12 2s4 3 4 8a4 4 0 0 1-8 0c0-5 4-8 4-8z" />
-      <path d="M8 14v6M16 14v6" />
-    </>
+    // fork & knife (food)
+    <path d="M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2M5 2v20M16 2c-1.5 1-2.5 3-2.5 6s1 5 2.5 6v8" />
   ),
   training: (
     // target
