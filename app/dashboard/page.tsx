@@ -9,7 +9,6 @@ import {
   getWeightLogs,
   getVaccinations,
   getDogInvites,
-  getReferralStats,
 } from '@/lib/data';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
@@ -137,10 +136,9 @@ async function TabContent({
   }
 
   if (tab === 'manage') {
-    const [withOwners, invites, refStats] = await Promise.all([
+    const [withOwners, invites] = await Promise.all([
       getDogById(dog.id),
       getDogInvites(dog.id),
-      getReferralStats(profile.id),
     ]);
     const owners = withOwners ? dogOwners(withOwners) : [];
     return (
@@ -149,7 +147,6 @@ async function TabContent({
         owners={owners}
         invites={invites}
         referralCode={profile.referral_code}
-        refStats={refStats}
       />
     );
   }
@@ -226,13 +223,11 @@ function ManageDog({
   owners,
   invites,
   referralCode,
-  refStats,
 }: {
   dog: Dog;
   owners: { id: string; display_name: string | null }[];
   invites: DogInvite[];
   referralCode: string | null;
-  refStats: { referredCount: number; rewardTotal: number; rewardCount: number };
 }) {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.trim() || 'https://app.dogsanook.com';
@@ -249,28 +244,10 @@ function ManageDog({
         </p>
 
         {referralCode ? (
-          <div className="mt-3 space-y-3">
-            <div className="flex gap-3">
-              <div className="flex-1 rounded-xl border border-white/5 bg-brand-bg/50 p-3 text-center">
-                <div className="text-xl font-bold text-brand-gold">
-                  {refStats.referredCount}
-                </div>
-                <div className="text-[11px] text-brand-muted">คนที่แนะนำ</div>
-              </div>
-              <div className="flex-1 rounded-xl border border-white/5 bg-brand-bg/50 p-3 text-center">
-                <div className="text-xl font-bold text-brand-green">
-                  ฿{refStats.rewardTotal.toLocaleString()}
-                </div>
-                <div className="text-[11px] text-brand-muted">
-                  ส่วนแบ่งสะสม ({refStats.rewardCount} ครั้ง)
-                </div>
-              </div>
-            </div>
-            <div className="rounded-xl border border-white/5 bg-brand-bg/50 p-3">
-              <p className="break-all text-xs text-brand-gold">{`${appUrl}/r/${referralCode}`}</p>
-              <div className="mt-2">
-                <QrButton url={`${appUrl}/r/${referralCode}`} filename="referral" />
-              </div>
+          <div className="mt-3 rounded-xl border border-white/5 bg-brand-bg/50 p-3">
+            <p className="break-all text-xs text-brand-gold">{`${appUrl}/r/${referralCode}`}</p>
+            <div className="mt-2">
+              <QrButton url={`${appUrl}/r/${referralCode}`} filename="referral" />
             </div>
           </div>
         ) : (
