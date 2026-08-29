@@ -1,6 +1,7 @@
 import type { Dog, Vaccination, WeightLog } from '@/lib/types';
 import { dailyEnergy, ageLabelTh, ACTIVITY_LABEL_TH, type ActivityLevel } from '@/lib/der';
 import SubmitButton from '@/components/SubmitButton';
+import ResetForm from '@/components/ResetForm';
 import DerRing from './DerRing';
 import WeightTrend from './WeightTrend';
 import {
@@ -279,7 +280,7 @@ export default function HealthPassport({
             <summary className="cursor-pointer text-sm text-brand-gold">
               + เพิ่มวัคซีน
             </summary>
-            <form action={addVaccination} className="mt-3 space-y-2">
+            <ResetForm action={addVaccination} className="mt-3 space-y-2">
               <input type="hidden" name="dogId" value={dog.id} />
               <input name="name" required className="input" placeholder="เช่น รวม 5 in 1" />
               <div className="grid grid-cols-2 gap-2">
@@ -294,12 +295,12 @@ export default function HealthPassport({
               </div>
               <input name="clinic" className="input" placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)" />
               <SubmitButton>เพิ่ม</SubmitButton>
-            </form>
+            </ResetForm>
           </details>
         </div>
 
         {/* ── quick weight log ──────────────────────────────── */}
-        <form action={logWeight} className="flex items-end gap-2">
+        <ResetForm action={logWeight} className="flex items-end gap-2">
           <input type="hidden" name="dogId" value={dog.id} />
           <div className="flex-1">
             <label className="label">บันทึกน้ำหนักวันนี้ (กก.)</label>
@@ -313,7 +314,7 @@ export default function HealthPassport({
             />
           </div>
           <SubmitButton pendingText="…">บันทึก</SubmitButton>
-        </form>
+        </ResetForm>
 
         {/* ── full edit form ────────────────────────────────── */}
         <details>
