@@ -65,6 +65,114 @@ function dueSoonVaccines(
     .sort((a, b) => a.days - b.days);
 }
 
+/** Keep only the most recent dose of each vaccine name (by given date), so a
+ *  new booster supersedes the old reminder instead of double-counting. */
+function latestPerName(list: Vaccination[]): Vaccination[] {
+  const byName = new Map<string, Vaccination>();
+  for (const v of list) {
+    const key = v.name.trim();
+    const cur = byName.get(key);
+    const a = v.given_on ? Date.parse(v.given_on) : -Infinity;
+    const b = cur?.given_on ? Date.parse(cur.given_on) : -Infinity;
+    if (!cur || a > b) byName.set(key, v);
+  }
+  return [...byName.values()];
+}
+
+/** Group every dose by vaccine name, newest dose first within each group. */
+function groupByName(list: Vaccination[]): { name: string; doses: Vaccination[] }[] {
+  const map = new Map<string, Vaccination[]>();
+  for (const v of list) {
+    const key = v.name.trim();
+    const arr = map.get(key) ?? [];
+    arr.push(v);
+    map.set(key, arr);
+  }
+  return [...map.entries()].map(([name, doses]) => ({
+    name,
+    doses: doses.sort((a, b) => (b.given_on ?? '').localeCompare(a.given_on ?? '')),
+  }));
+}
+
+const isoToday = () => new Date().toISOString().slice(0, 10);
+const isoPlusYear = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0, 10);
+};
+
+/** One vaccine group in the full list: dose history + a "record new dose". */
+function VaccineGroup({
+  dogId,
+  name,
+  doses,
+}: {
+  dogId: string;
+  name: string;
+  doses: Vaccination[];
+}) {
+  return (
+    <div className="rounded-xl border border-white/5 bg-brand-bg/50 p-3">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium text-brand-cream">{name}</div>
+        <span className="text-xs text-brand-muted">{doses.length} เข็ม</span>
+      </div>
+      <ul className="mt-2 space-y-1.5">
+        {doses.map((v, i) => (
+          <li key={v.id} className="flex items-center gap-2 text-xs">
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${
+                i === 0 ? 'bg-brand-green' : 'bg-white/20'
+              }`}
+            />
+            <span className="min-w-0 flex-1 text-brand-muted">
+              {fmtDate(v.given_on)}
+              {v.clinic ? ` · ${v.clinic}` : ''}
+              {v.next_due_on ? ` · ถัดไป ${fmtDate(v.next_due_on)}` : ''}
+            </span>
+            <form action={deleteVaccination}>
+              <input type="hidden" name="dogId" value={dogId} />
+              <input type="hidden" name="vaccId" value={v.id} />
+              <button type="submit" className="text-brand-muted hover:text-red-300">
+                ลบ
+              </button>
+            </form>
+          </li>
+        ))}
+      </ul>
+      <details className="mt-2">
+        <summary className="cursor-pointer text-xs text-brand-gold">
+          ฉีดเพิ่ม (บันทึกเข็มใหม่)
+        </summary>
+        <ResetForm action={addVaccination} className="mt-2 space-y-2">
+          <input type="hidden" name="dogId" value={dogId} />
+          <input type="hidden" name="name" value={name} />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="label">วันที่ฉีด</label>
+              <input type="date" name="given_on" defaultValue={isoToday()} className="input" />
+            </div>
+            <div>
+              <label className="label">เข็มถัดไป</label>
+              <input
+                type="date"
+                name="next_due_on"
+                defaultValue={isoPlusYear()}
+                className="input"
+              />
+            </div>
+          </div>
+          <input name="clinic" className="input" placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)" />
+          <p className="text-[11px] text-brand-muted">
+            ปกติกระตุ้นทุก 1 ปี — ปรับวันได้ตามที่สัตวแพทย์แนะนำ
+          </p>
+          <SubmitButton>บันทึกเข็มใหม่</SubmitButton>
+        </ResetForm>
+      </details>
+    </div>
+  );
+}
+
 /** One "เข็มถัดไป" reminder row for a vaccine that is due soon / overdue. */
 function VaccineDueRow({ v, days }: { v: Vaccination; days: number }) {
   const overdue = days < 0;
@@ -158,8 +266,12 @@ export default function HealthPassport({
   const hasMeasures =
     dog.chest_cm != null || dog.neck_cm != null || dog.muzzle_cm != null;
   const latestVacc = vaccinations[0] ?? null;
-  const nextDue = nextDueVaccine(vaccinations);
-  const dueSoon = dueSoonVaccines(vaccinations, 31);
+  // Reminders consider only the latest dose per vaccine, so logging a booster
+  // rolls the reminder forward automatically.
+  const latestDoses = latestPerName(vaccinations);
+  const nextDue = nextDueVaccine(latestDoses);
+  const dueSoon = dueSoonVaccines(latestDoses, 31);
+  const vaccineGroups = groupByName(vaccinations);
 
   return (
     <section className="overflow-hidden rounded-card border border-white/5 bg-brand-bgSoft">
@@ -326,40 +438,22 @@ export default function HealthPassport({
             </div>
           </div>
 
-          {/* manage vaccines */}
-          {vaccinations.length > 1 && (
+          {/* manage vaccines, grouped by type with per-vaccine "ฉีดเพิ่ม" */}
+          {vaccineGroups.length > 0 && (
             <details className="mt-2.5">
               <summary className="cursor-pointer text-sm text-brand-gold">
                 ดูวัคซีนทั้งหมด ({vaccinations.length})
               </summary>
-              <ul className="mt-2 space-y-2">
-                {vaccinations.map((v) => (
-                  <li
-                    key={v.id}
-                    className="flex items-center gap-3 rounded-xl border border-white/5 bg-brand-bg/50 px-3 py-2.5"
-                  >
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-brand-green" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm text-brand-cream">{v.name}</div>
-                      <div className="text-xs text-brand-muted">
-                        {fmtDate(v.given_on)}
-                        {v.clinic ? ` · ${v.clinic}` : ''}
-                        {v.next_due_on ? ` · ถัดไป ${fmtDate(v.next_due_on)}` : ''}
-                      </div>
-                    </div>
-                    <form action={deleteVaccination}>
-                      <input type="hidden" name="dogId" value={dog.id} />
-                      <input type="hidden" name="vaccId" value={v.id} />
-                      <button
-                        type="submit"
-                        className="text-xs text-brand-muted hover:text-red-300"
-                      >
-                        ลบ
-                      </button>
-                    </form>
-                  </li>
+              <div className="mt-2 space-y-2">
+                {vaccineGroups.map((g) => (
+                  <VaccineGroup
+                    key={g.name}
+                    dogId={dog.id}
+                    name={g.name}
+                    doses={g.doses}
+                  />
                 ))}
-              </ul>
+              </div>
             </details>
           )}
 
