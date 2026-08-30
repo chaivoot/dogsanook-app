@@ -131,7 +131,7 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
       <div className="grid grid-cols-2 gap-3">
         <RingStat
           title="RER"
-          subtitle="พลังงานขณะพัก"
+          subtitle="แคลอรีขณะพัก/วัน"
           center={rer != null ? String(Math.round(rer)) : '–'}
           unit="kcal/วัน"
           footer="พลังงานพื้นฐาน"
@@ -140,7 +140,7 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
         />
         <RingStat
           title="DER"
-          subtitle="พลังงานต่อวัน"
+          subtitle="แคลอรีต่อวัน"
           center={der != null ? String(der) : '–'}
           unit="kcal/วัน"
           footer={`${factor}× RER`}
