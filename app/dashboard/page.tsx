@@ -13,6 +13,7 @@ import {
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
 import QrButton from '@/components/QrButton';
+import ConsultButton from '@/components/ConsultButton';
 import HealthPassport from '@/components/health/HealthPassport';
 import NutritionDashboard from '@/components/health/NutritionDashboard';
 import GraphDashboard from '@/components/health/GraphDashboard';
@@ -170,9 +171,27 @@ async function TabContent({
       }
     }
 
+    const hasProgress = lessons.some(
+      (l) => l.taught || l.can_do || l.practiced_count > 0,
+    );
+
     return (
       <div className="space-y-6">
         <h1 className="text-xl font-bold text-brand-cream">การฝึกของ{dog.name}</h1>
+
+        {!hasProgress && (
+          <section className="rounded-card border border-brand-gold/25 bg-brand-gold/[.06] p-4 text-center">
+            <p className="font-medium text-brand-cream">
+              ยังไม่เริ่มเรียนกับหมาสนุก? 🐕
+            </p>
+            <p className="mt-1 text-sm text-brand-muted">
+              ระบบฝึก 10 เกม เล่นไปฝึกไป ไม่ดุ ไม่บังคับ — โทรปรึกษาการฝึกกับเราได้เลย
+            </p>
+            <div className="mt-4">
+              <ConsultButton label="โทรปรึกษาการฝึกน้องหมา" />
+            </div>
+          </section>
+        )}
 
         <ProgressSummary lessons={lessons} />
 
