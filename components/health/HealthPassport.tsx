@@ -115,6 +115,7 @@ const VACCINE_TYPES = [
 const VACCINE_BRANDS = [
   'Nobivac',
   'Vanguard',
+  'Versican',
   'Recombitek',
   'Defensor',
   'Rabisin',
@@ -122,6 +123,7 @@ const VACCINE_BRANDS = [
   'Canigen',
   'Biocan',
   'Eurican',
+  'Bronchi-Shield',
 ];
 
 const REACTION_LABEL: Record<string, string> = {
