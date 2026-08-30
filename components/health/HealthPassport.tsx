@@ -135,46 +135,48 @@ const REACTION_CLASS: Record<string, string> = {
   severe: 'bg-red-500/15 text-[#f0a0a0]',
 };
 
-/** Brand (with suggestions) + post-shot reaction, shared by the add/edit forms. */
-function VaccineExtraFields({
-  brand,
+/** Brand input (with suggestions) — sits right after the vaccine type. */
+function BrandField({ brand }: { brand?: string | null }) {
+  return (
+    <input
+      name="brand"
+      defaultValue={brand ?? ''}
+      className="input"
+      placeholder="ยี่ห้อ (เช่น Vanguard, Nobivac)"
+      list="vaccine-brands"
+    />
+  );
+}
+
+/** Post-shot reaction select + note, shared by the add/edit forms. */
+function ReactionFields({
   reaction,
   reactionNote,
 }: {
-  brand?: string | null;
   reaction?: string | null;
   reactionNote?: string | null;
 }) {
   return (
-    <>
-      <input
-        name="brand"
-        defaultValue={brand ?? ''}
-        className="input"
-        placeholder="ยี่ห้อ (เช่น Vanguard, Nobivac)"
-        list="vaccine-brands"
-      />
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="label">หลังฉีด</label>
-          <select name="reaction" defaultValue={reaction ?? ''} className="input">
-            <option value="">— ไม่ระบุ —</option>
-            <option value="none">ไม่แพ้ / ปกติดี</option>
-            <option value="mild">มีอาการเล็กน้อย</option>
-            <option value="severe">แพ้รุนแรง</option>
-          </select>
-        </div>
-        <div>
-          <label className="label">อาการ (ถ้ามี)</label>
-          <input
-            name="reaction_note"
-            defaultValue={reactionNote ?? ''}
-            className="input"
-            placeholder="เช่น บวมนิดหน่อย"
-          />
-        </div>
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <label className="label">หลังฉีด</label>
+        <select name="reaction" defaultValue={reaction ?? ''} className="input">
+          <option value="">— ไม่ระบุ —</option>
+          <option value="none">ไม่แพ้ / ปกติดี</option>
+          <option value="mild">มีอาการเล็กน้อย</option>
+          <option value="severe">แพ้รุนแรง</option>
+        </select>
       </div>
-    </>
+      <div>
+        <label className="label">อาการ (ถ้ามี)</label>
+        <input
+          name="reaction_note"
+          defaultValue={reactionNote ?? ''}
+          className="input"
+          placeholder="เช่น บวมนิดหน่อย"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -237,6 +239,7 @@ function VaccineGroup({
                     placeholder="ชื่อวัคซีน"
                     list="vaccine-types"
                   />
+                  <BrandField brand={v.brand} />
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="label">วันที่ฉีด</label>
@@ -263,11 +266,7 @@ function VaccineGroup({
                     className="input"
                     placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)"
                   />
-                  <VaccineExtraFields
-                    brand={v.brand}
-                    reaction={v.reaction}
-                    reactionNote={v.reaction_note}
-                  />
+                  <ReactionFields reaction={v.reaction} reactionNote={v.reaction_note} />
                   <SubmitButton>บันทึกการแก้ไข</SubmitButton>
                 </form>
               </details>
@@ -298,6 +297,7 @@ function RecordDoseForm({ dogId, name }: { dogId: string; name: string }) {
     <ResetForm action={addVaccination} className="mt-2 space-y-2">
       <input type="hidden" name="dogId" value={dogId} />
       <input type="hidden" name="name" value={name} />
+      <BrandField />
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="label">วันที่ฉีด</label>
@@ -309,7 +309,7 @@ function RecordDoseForm({ dogId, name }: { dogId: string; name: string }) {
         </div>
       </div>
       <input name="clinic" className="input" placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)" />
-      <VaccineExtraFields />
+      <ReactionFields />
       <p className="text-[11px] text-brand-muted">
         ปกติกระตุ้นทุก 1 ปี — ปรับวันได้ตามที่สัตวแพทย์แนะนำ
       </p>
@@ -632,6 +632,7 @@ export default function HealthPassport({
                 placeholder="เช่น วัคซีนรวม 5 โรค"
                 list="vaccine-types"
               />
+              <BrandField />
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="label">วันที่ฉีด</label>
@@ -643,7 +644,7 @@ export default function HealthPassport({
                 </div>
               </div>
               <input name="clinic" className="input" placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)" />
-              <VaccineExtraFields />
+              <ReactionFields />
               <SubmitButton>เพิ่ม</SubmitButton>
             </ResetForm>
           </details>
