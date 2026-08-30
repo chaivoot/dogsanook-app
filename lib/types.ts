@@ -92,9 +92,12 @@ export interface Vaccination {
   id: string;
   dog_id: string;
   name: string;
+  brand: string | null;
   given_on: string | null;
   next_due_on: string | null;
   clinic: string | null;
+  reaction: string | null; // 'none' | 'mild' | 'severe'
+  reaction_note: string | null;
   logged_by: string | null;
   created_at: string;
 }

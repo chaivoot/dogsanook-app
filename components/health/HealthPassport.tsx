@@ -102,6 +102,72 @@ const isoPlusYear = () => {
   return d.toISOString().slice(0, 10);
 };
 
+const VACCINE_BRANDS = [
+  'Nobivac',
+  'Vanguard',
+  'Recombitek',
+  'Defensor',
+  'Rabisin',
+  'Leptoferm',
+  'Canigen',
+  'Biocan',
+  'Eurican',
+];
+
+const REACTION_LABEL: Record<string, string> = {
+  none: 'ไม่แพ้ / ปกติดี',
+  mild: 'มีอาการเล็กน้อย',
+  severe: 'แพ้รุนแรง',
+};
+const REACTION_CLASS: Record<string, string> = {
+  none: 'bg-brand-green/15 text-brand-green',
+  mild: 'bg-amber-500/15 text-amber-300',
+  severe: 'bg-red-500/15 text-[#f0a0a0]',
+};
+
+/** Brand (with suggestions) + post-shot reaction, shared by the add/edit forms. */
+function VaccineExtraFields({
+  brand,
+  reaction,
+  reactionNote,
+}: {
+  brand?: string | null;
+  reaction?: string | null;
+  reactionNote?: string | null;
+}) {
+  return (
+    <>
+      <input
+        name="brand"
+        defaultValue={brand ?? ''}
+        className="input"
+        placeholder="ยี่ห้อ (เช่น Vanguard, Nobivac)"
+        list="vaccine-brands"
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="label">หลังฉีด</label>
+          <select name="reaction" defaultValue={reaction ?? ''} className="input">
+            <option value="">— ไม่ระบุ —</option>
+            <option value="none">ไม่แพ้ / ปกติดี</option>
+            <option value="mild">มีอาการเล็กน้อย</option>
+            <option value="severe">แพ้รุนแรง</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">อาการ (ถ้ามี)</label>
+          <input
+            name="reaction_note"
+            defaultValue={reactionNote ?? ''}
+            className="input"
+            placeholder="เช่น บวมนิดหน่อย"
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
 /** One vaccine group in the full list: dose history + a "record new dose". */
 function VaccineGroup({
   dogId,
@@ -128,9 +194,20 @@ function VaccineGroup({
                 }`}
               />
               <span className="min-w-0 flex-1 text-brand-muted">
+                {v.brand ? (
+                  <span className="text-brand-cream">{v.brand} · </span>
+                ) : null}
                 {fmtDate(v.given_on)}
                 {v.clinic ? ` · ${v.clinic}` : ''}
                 {v.next_due_on ? ` · ถัดไป ${fmtDate(v.next_due_on)}` : ''}
+                {v.reaction && REACTION_LABEL[v.reaction] ? (
+                  <span
+                    className={`ml-1 inline-block rounded-full px-1.5 py-0.5 text-[10px] ${REACTION_CLASS[v.reaction]}`}
+                  >
+                    {REACTION_LABEL[v.reaction]}
+                    {v.reaction_note ? ` · ${v.reaction_note}` : ''}
+                  </span>
+                ) : null}
               </span>
               <details>
                 <summary className="cursor-pointer list-none text-brand-gold [&::-webkit-details-marker]:hidden">
@@ -175,6 +252,11 @@ function VaccineGroup({
                     className="input"
                     placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)"
                   />
+                  <VaccineExtraFields
+                    brand={v.brand}
+                    reaction={v.reaction}
+                    reactionNote={v.reaction_note}
+                  />
                   <SubmitButton>บันทึกการแก้ไข</SubmitButton>
                 </form>
               </details>
@@ -216,6 +298,7 @@ function RecordDoseForm({ dogId, name }: { dogId: string; name: string }) {
         </div>
       </div>
       <input name="clinic" className="input" placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)" />
+      <VaccineExtraFields />
       <p className="text-[11px] text-brand-muted">
         ปกติกระตุ้นทุก 1 ปี — ปรับวันได้ตามที่สัตวแพทย์แนะนำ
       </p>
@@ -543,9 +626,17 @@ export default function HealthPassport({
                 </div>
               </div>
               <input name="clinic" className="input" placeholder="โรงพยาบาลสัตว์ (ไม่บังคับ)" />
+              <VaccineExtraFields />
               <SubmitButton>เพิ่ม</SubmitButton>
             </ResetForm>
           </details>
+
+          {/* brand suggestions shared by all vaccine forms */}
+          <datalist id="vaccine-brands">
+            {VACCINE_BRANDS.map((b) => (
+              <option key={b} value={b} />
+            ))}
+          </datalist>
         </div>
 
         {/* ── quick weight log ──────────────────────────────── */}

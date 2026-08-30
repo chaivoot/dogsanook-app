@@ -358,9 +358,12 @@ export async function addVaccination(formData: FormData) {
   await admin.from('vaccinations').insert({
     dog_id: dogId,
     name,
+    brand: opt(formData, 'brand'),
     given_on: opt(formData, 'given_on'),
     next_due_on: opt(formData, 'next_due_on'),
     clinic: opt(formData, 'clinic'),
+    reaction: opt(formData, 'reaction'),
+    reaction_note: opt(formData, 'reaction_note'),
     logged_by: ownerId,
   });
 
@@ -382,9 +385,12 @@ export async function updateVaccination(formData: FormData) {
     .from('vaccinations')
     .update({
       name,
+      brand: opt(formData, 'brand'),
       given_on: opt(formData, 'given_on'),
       next_due_on: opt(formData, 'next_due_on'),
       clinic: opt(formData, 'clinic'),
+      reaction: opt(formData, 'reaction'),
+      reaction_note: opt(formData, 'reaction_note'),
     })
     .eq('id', vaccId)
     .eq('dog_id', dogId);
