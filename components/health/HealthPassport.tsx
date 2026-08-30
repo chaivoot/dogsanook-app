@@ -102,6 +102,16 @@ const isoPlusYear = () => {
   return d.toISOString().slice(0, 10);
 };
 
+const VACCINE_TYPES = [
+  'วัคซีนรวม 5 โรค',
+  'วัคซีนรวม 4 โรค',
+  'พิษสุนัขบ้า',
+  'โรคฉี่หนู (Leptospirosis)',
+  'หลอดลมอักเสบติดต่อ (Kennel cough)',
+  'ไข้หัดสุนัข',
+  'พาร์โวไวรัส',
+];
+
 const VACCINE_BRANDS = [
   'Nobivac',
   'Vanguard',
@@ -225,6 +235,7 @@ function VaccineGroup({
                     defaultValue={v.name}
                     className="input"
                     placeholder="ชื่อวัคซีน"
+                    list="vaccine-types"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <div>
@@ -614,7 +625,13 @@ export default function HealthPassport({
             </summary>
             <ResetForm action={addVaccination} className="mt-3 space-y-2">
               <input type="hidden" name="dogId" value={dog.id} />
-              <input name="name" required className="input" placeholder="เช่น รวม 5 in 1" />
+              <input
+                name="name"
+                required
+                className="input"
+                placeholder="เช่น วัคซีนรวม 5 โรค"
+                list="vaccine-types"
+              />
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="label">วันที่ฉีด</label>
@@ -631,7 +648,12 @@ export default function HealthPassport({
             </ResetForm>
           </details>
 
-          {/* brand suggestions shared by all vaccine forms */}
+          {/* suggestions shared by all vaccine forms */}
+          <datalist id="vaccine-types">
+            {VACCINE_TYPES.map((t) => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
           <datalist id="vaccine-brands">
             {VACCINE_BRANDS.map((b) => (
               <option key={b} value={b} />
