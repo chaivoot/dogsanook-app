@@ -379,11 +379,11 @@ function VaccineDueRow({
 function Measure({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="rounded-2xl bg-brand-card px-2 py-3.5 text-center text-brand-ink">
-      <div className="text-[11px] text-brand-mutedInk">{label}</div>
-      <div className="mt-0.5 text-2xl font-bold leading-none">
+      <div className="text-sm font-semibold text-brand-ink/80">{label}</div>
+      <div className="mt-1 text-2xl font-bold leading-none">
         {value ?? '–'}
         {value != null && (
-          <span className="text-[11px] font-medium text-brand-mutedInk"> cm</span>
+          <span className="text-sm font-semibold text-brand-ink/60"> cm</span>
         )}
       </div>
     </div>
