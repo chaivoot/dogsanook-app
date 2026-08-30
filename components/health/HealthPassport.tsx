@@ -499,7 +499,9 @@ export default function HealthPassport({
             )}
             <div>
               <div className="text-xs text-brand-muted">พลังงานที่ต้องการ</div>
-              <div className="mt-1 text-sm font-semibold text-brand-cream">DER ต่อวัน</div>
+              <div className="mt-1 text-sm font-semibold text-brand-cream">
+                DER · แคลอรีต่อวัน
+              </div>
               <div className="mt-0.5 text-xs text-brand-teal">
                 {der != null ? 'คำนวณจากน้ำหนัก' : 'ยังคำนวณไม่ได้'}
               </div>
