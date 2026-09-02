@@ -8,7 +8,6 @@ import {
 } from '@/lib/der';
 import { intakeKcal, feedingStatus } from '@/lib/food';
 import SubmitButton from '@/components/SubmitButton';
-import ConsultButton from '@/components/ConsultButton';
 import { saveCurrentFood } from '@/app/dashboard/actions';
 import RingStat from './RingStat';
 import FoodRecommendation from './FoodRecommendation';
@@ -170,8 +169,6 @@ export default function NutritionDashboard({ dog }: { dog: Dog }) {
       <CurrentFoodCard dog={dog} rer={rer != null ? Math.round(rer) : null} der={der} />
 
       <FoodRecommendation dog={dog} />
-
-      <ConsultButton label="โทรปรึกษาโภชนาการ" />
     </div>
   );
 }
