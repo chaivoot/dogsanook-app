@@ -67,7 +67,7 @@ export function bcsStatus(
 ): { label: string; tone: 'low' | 'ideal' | 'high' } | null {
   if (bcs == null || !Number.isFinite(bcs)) return null;
   if (bcs <= 3) return { label: 'ผอมไป', tone: 'low' };
-  if (bcs <= 5) return { label: 'อุดมสมบูรณ์', tone: 'ideal' };
+  if (bcs <= 5) return { label: 'สมส่วน', tone: 'ideal' };
   if (bcs <= 6) return { label: 'ท้วม', tone: 'high' };
   return { label: 'อ้วนไป', tone: 'high' };
 }
